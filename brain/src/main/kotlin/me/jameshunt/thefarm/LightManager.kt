@@ -5,6 +5,9 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+/**
+ * alternate implementation would be to check hourly for what the light intensity/spectrum should be and updating it
+ */
 
 class LightManager {
     private val turnOnTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))

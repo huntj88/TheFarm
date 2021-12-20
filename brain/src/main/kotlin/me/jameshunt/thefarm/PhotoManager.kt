@@ -14,8 +14,8 @@ class PhotoManager {
         timer.schedule(takePhotoTask, 0, 1 * 60 * 1000L)
     }
 
+    // TODO: send metadata over like name (Experiment 1), number of days since start, associate with file
     private fun takeAndroidPhoto() {
-//    val isOn = "adb shell dumpsys input_method | grep screenOn".exec().contains("screenOn=true")
         val clickPowerButton = "adb shell input keyevent 26"
 
         val swipeUp = "adb shell input touchscreen swipe 930 880 930 380"
