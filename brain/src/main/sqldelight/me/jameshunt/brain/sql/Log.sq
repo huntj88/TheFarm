@@ -1,8 +1,8 @@
 CREATE TABLE log
 (
-    log_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    time         TEXT NOT NULL,
-    tag  TEXT NOT NULL,
+    log_id      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    time        TEXT NOT NULL,
+    tag         TEXT NOT NULL,
     description TEXT NOT NULL
 );
 
