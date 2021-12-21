@@ -1,18 +1,29 @@
 package me.jameshunt.thefarm
 
+import com.squareup.sqldelight.db.SqlDriver
+import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
+import me.jameshunt.brain.sql.Database
+import me.jameshunt.brain.sql.LogQueries
 import java.io.File
-import java.time.*
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun main() {
-    val timer = Timer()
-    val lightManager = LightManager()
-    val photoManager = PhotoManager()
+    val driver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY) // TODO: in memory should be on disk
+    Database.Schema.create(driver)
+    val database = Database(driver)
 
-    lightManager.schedule(timer)
-    photoManager.schedule(timer)
+    val timer = Timer()
+    val powerManager = PowerManager(database.logQueries)
+    val lightScheduler = LightScheduler(powerManager)
+    val waterScheduler = WaterScheduler(powerManager)
+    val photoScheduler = PhotoScheduler(database.logQueries)
+
+    lightScheduler.schedule(timer)
+    waterScheduler.schedule(timer)
+    photoScheduler.schedule(timer)
 
     // infrequent or only at start unless fancy equipment
     // ph sensor - on solution
@@ -28,9 +39,10 @@ fun main() {
     // reservoir level sensor
 }
 
-fun String.log() {
+fun LogQueries.insert(tag: String, description: String) {
     val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    println("$time\n$this")
+    this.insert(time, tag, description)
+    println("$time -- $tag\n$description")
 }
 
 

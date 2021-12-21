@@ -1,5 +1,6 @@
 package me.jameshunt.thefarm
 
+import me.jameshunt.thefarm.PowerManager.*
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -9,24 +10,19 @@ import java.util.concurrent.TimeUnit
  * alternate implementation would be to check hourly for what the light intensity/spectrum should be and updating it
  */
 
-class LightManager {
+class LightScheduler(private val powerManager: PowerManager) {
     private val turnOnTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))
     private val turnOffTime = turnOnTime.plusHours(12)
 
-    @Volatile
-    private var on = false
-
     private val turnOnLights = object : TimerTask() {
         override fun run() {
-            on = true
-            "Lights: ON".log()
+            powerManager.setState(PlugAlias.Lights, on = true)
         }
     }
 
     private val turnOffLights = object : TimerTask() {
         override fun run() {
-            on = false
-            "Lights: OFF".log()
+            powerManager.setState(PlugAlias.Lights, on = false)
         }
     }
 
@@ -48,8 +44,6 @@ class LightManager {
             turnOnTime.toInstant(defaultOffset)
         }
 
-        "Lights ON scheduled for: ${scheduledTime.atOffset(defaultOffset)}".log()
-
         timer.scheduleAtFixedRate(turnOnLights, Date.from(scheduledTime), ChronoUnit.DAYS.duration.toMillis())
     }
 
@@ -62,8 +56,6 @@ class LightManager {
         } else {
             turnOffTime.toInstant(defaultOffset)
         }
-
-        "Lights OFF scheduled for: ${scheduledTime.atOffset(defaultOffset)}".log()
 
         timer.scheduleAtFixedRate(turnOffLights, Date.from(scheduledTime), ChronoUnit.DAYS.duration.toMillis())
     }

@@ -1,9 +1,27 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.squareup.sqldelight:gradle-plugin:1.5.3'
+    }
+}
+
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.31'
 }
 
+apply plugin: 'com.squareup.sqldelight'
+
 group 'me.jameshunt'
 version '1.0-SNAPSHOT'
+
+sqldelight {
+    Database { // This will be the name of the generated database class.
+        packageName = "me.jameshunt.brain.sql"
+    }
+}
 
 repositories {
     mavenCentral()
@@ -11,4 +29,5 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "com.squareup.sqldelight:sqlite-driver:1.5.3"
 }

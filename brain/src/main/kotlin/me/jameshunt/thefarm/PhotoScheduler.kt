@@ -1,8 +1,9 @@
 package me.jameshunt.thefarm
 
+import me.jameshunt.brain.sql.LogQueries
 import java.util.*
 
-class PhotoManager {
+class PhotoScheduler(private val logQueries: LogQueries) {
 
     private val takePhotoTask = object : TimerTask() {
         override fun run() {
@@ -12,7 +13,7 @@ class PhotoManager {
     }
 
     fun schedule(timer: Timer) {
-        timer.schedule(takePhotoTask, 0, 1 * 60 * 1000L)
+        timer.schedule(takePhotoTask, 0, 10 * 60 * 1000L)
     }
 
     private fun takeAndroidPhoto(runId: Int) {
@@ -27,7 +28,9 @@ class PhotoManager {
         swipeUp.exec()
         enterCode.exec()
         clickEnter.exec()
-        startApp.exec().log()
+        startApp.exec().also {
+            logQueries.insert("PHOTO", "taking a picture")
+        }
         Thread.sleep(10_000)
         clickPowerButton.exec()
     }

@@ -1,0 +1,13 @@
+CREATE TABLE sensorReport
+(
+    sensor_report_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    time             TEXT NOT NULL,
+    sensor_name      TEXT NOT NULL,
+    sensor_value     REAL NOT NULL
+);
+
+insert:
+INSERT INTO sensorReport(time, sensor_name, sensor_value)
+VALUES (?, ?, ?);
+
+
