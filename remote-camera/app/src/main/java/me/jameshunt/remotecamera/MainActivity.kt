@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val runId = intent.getIntExtra("runId", -1)
 
         val imageCapture = ImageCapture.Builder()
             .setFlashMode(FLASH_MODE_ON)
@@ -51,7 +52,7 @@ class MainActivity : AppCompatActivity() {
                             Log.d(
                                 "Main", "took picture with size: ${saveFile.readBytes().size}"
                             )
-                            uploadTimeStampedFile(saveFile)
+                            uploadTimeStampedFile(saveFile, runId)
                         }
                     }
                 )
@@ -59,13 +60,14 @@ class MainActivity : AppCompatActivity() {
         }, mainExecutor)
     }
 
-    fun uploadTimeStampedFile(file: File) {
+    fun uploadTimeStampedFile(file: File, runId: Int) {
         Executors.newSingleThreadExecutor().execute {
             val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             getMinioClient().uploadObject(
                 UploadObjectArgs.builder()
                     .bucket("images")
                     .`object`("$time.jpg")
+                    .userMetadata(mapOf("runId" to "$runId"))
                     .filename(file.absolutePath)
                     .build()
             )

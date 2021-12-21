@@ -6,7 +6,8 @@ class PhotoManager {
 
     private val takePhotoTask = object : TimerTask() {
         override fun run() {
-            takeAndroidPhoto()
+            val runId = 1 // TODO: configurable
+            takeAndroidPhoto(runId)
         }
     }
 
@@ -14,14 +15,13 @@ class PhotoManager {
         timer.schedule(takePhotoTask, 0, 1 * 60 * 1000L)
     }
 
-    // TODO: send metadata over like name (Experiment 1), number of days since start, associate with file
-    private fun takeAndroidPhoto() {
+    private fun takeAndroidPhoto(runId: Int) {
         val clickPowerButton = "adb shell input keyevent 26"
 
         val swipeUp = "adb shell input touchscreen swipe 930 880 930 380"
         val enterCode = "adb shell input text $phoneCode"
         val clickEnter = "adb shell input keyevent 66"
-        val startApp = "adb shell am start -S me.jameshunt.remotecamera/me.jameshunt.remotecamera.MainActivity"
+        val startApp = "adb shell am start -S -n me.jameshunt.remotecamera/.MainActivity --ei runId $runId"
 
         clickPowerButton.exec()
         swipeUp.exec()
