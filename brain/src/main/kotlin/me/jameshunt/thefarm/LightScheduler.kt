@@ -1,6 +1,6 @@
 package me.jameshunt.thefarm
 
-import me.jameshunt.thefarm.PowerManager.*
+import me.jameshunt.thefarm.PowerManager.PlugAlias
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  */
 
 class LightScheduler(private val powerManager: PowerManager) {
-    private val turnOnTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))
+    private val turnOnTime = LocalTime.of(7, 0)
     private val turnOffTime = turnOnTime.plusHours(12)
 
     private val turnOnLights = object : TimerTask() {
@@ -32,29 +32,33 @@ class LightScheduler(private val powerManager: PowerManager) {
     }
 
     private fun scheduleTurnOnLightsTask(timer: Timer) {
-        val now = LocalDateTime.now()
+        val now = LocalTime.now()
         val defaultOffset = ZoneOffset.systemDefault().offset()
 
         val scheduledTime: Instant = if (now > turnOnTime && now < turnOffTime) {
             turnOnLights.run()
-            turnOnTime.plusDays(1).toInstant(defaultOffset)
+            LocalDateTime.of(LocalDate.now().plusDays(1), turnOnTime).toInstant(defaultOffset)
         } else if (now > turnOffTime) {
-            turnOnTime.plusDays(1).toInstant(defaultOffset)
+            LocalDateTime.of(LocalDate.now().plusDays(1), turnOnTime).toInstant(defaultOffset)
         } else {
-            turnOnTime.toInstant(defaultOffset)
+            LocalDateTime.of(LocalDate.now(), turnOnTime).toInstant(defaultOffset)
         }
 
         timer.scheduleAtFixedRate(turnOnLights, Date.from(scheduledTime), ChronoUnit.DAYS.duration.toMillis())
     }
 
     private fun scheduleTurnOffLightsTask(timer: Timer) {
-        val now = LocalDateTime.now()
+        val now = LocalTime.now()
         val defaultOffset = ZoneOffset.systemDefault().offset()
 
-        val scheduledTime: Instant = if (now > turnOffTime) {
-            turnOffTime.plusDays(1).toInstant(defaultOffset)
+        val scheduledTime: Instant = if (now < turnOnTime) {
+            turnOffLights.run()
+            LocalDateTime.of(LocalDate.now(), turnOffTime).toInstant(defaultOffset)
+        } else if (now > turnOffTime) {
+            turnOffLights.run()
+            LocalDateTime.of(LocalDate.now().plusDays(1), turnOffTime).toInstant(defaultOffset)
         } else {
-            turnOffTime.toInstant(defaultOffset)
+            LocalDateTime.of(LocalDate.now(), turnOffTime).toInstant(defaultOffset)
         }
 
         timer.scheduleAtFixedRate(turnOffLights, Date.from(scheduledTime), ChronoUnit.DAYS.duration.toMillis())
