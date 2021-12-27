@@ -4,11 +4,12 @@ CREATE TABLE log
     time        TEXT NOT NULL,
     level       TEXT NOT NULL,
     tag         TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    exception   TEXT
 );
 
 insert:
-INSERT INTO log(time, level, tag, description)
-VALUES (?, ?, ?, ?);
+INSERT INTO log(time, level, tag, description, exception)
+VALUES (?, ?, ?, ?, ?);
 
 

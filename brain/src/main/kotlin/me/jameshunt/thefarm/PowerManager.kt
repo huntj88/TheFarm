@@ -1,10 +1,9 @@
 package me.jameshunt.thefarm
 
-import me.jameshunt.brain.sql.LogQueries
 import me.jameshunt.thefarm.PowerManager.PlugAlias.Companion.id
 import java.io.File
 
-class PowerManager(private val logQueries: LogQueries) {
+class PowerManager(private val logger: FarmLogger) {
     // todo: env var
     private val cliDirectory: File = File("/home/jameshunt/IdeaProjects/tplink-smartplug")
 
@@ -28,9 +27,10 @@ class PowerManager(private val logQueries: LogQueries) {
         val setState = """{"context":{"child_ids":["${plugAlias.id}"]},"system":{"set_relay_state":{"state":$state}}}"""
         try {
             val response = setState.executeJsonCommand()
-            logQueries.insert(LogLevel.Info, "POWER", "Command: $setState, Response: $response")
+            logger.info("POWER", "Command: $setState, Response: $response")
         } catch (e: Exception) {
-            logQueries.insert(LogLevel.Error, "POWER", "Command: $setState, Response: $e")
+            logger.error("POWER", "Command: $setState", e)
+            throw e
         }
     }
 

@@ -1,24 +1,23 @@
 package me.jameshunt.thefarm
 
-import me.jameshunt.brain.sql.LogQueries
-import java.util.*
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
-class PhotoScheduler(private val logQueries: LogQueries) {
+class PhotoScheduler(private val timer: ScheduledThreadPoolExecutor, private val logger: FarmLogger) {
+    private val tag = "PHOTO"
     private val androidPhoneIp = "192.168.1.73" // TODO: configurable
 
-    private val takePhotoTask = object : TimerTask() {
-        override fun run() {
-            val runId = 1 // TODO: configurable
-            try {
-                takeAndroidPhoto(runId)
-            } catch (e: Exception) {
-                logQueries.insert(LogLevel.Error, "PHOTO", "error taking a picture: $e")
-            }
+    private val takePhotoTask = Runnable {
+        val runId = 1 // TODO: configurable
+        try {
+            takeAndroidPhoto(runId)
+        } catch (e: Exception) {
+            logger.error(tag, "error taking a picture", e)
         }
     }
 
-    fun schedule(timer: Timer) {
-        timer.schedule(takePhotoTask, 0, 10 * 60 * 1000L)
+    fun schedule() {
+        timer.scheduleWithFixedDelay(takePhotoTask, 0, 1, TimeUnit.HOURS)
     }
 
     private fun takeAndroidPhoto(runId: Int) {
@@ -30,15 +29,16 @@ class PhotoScheduler(private val logQueries: LogQueries) {
         val clickEnter = "adb shell input keyevent 66"
         val startApp = "adb shell am start -S -n me.jameshunt.remotecamera/.MainActivity --ei runId $runId"
 
+
         adbConnect.exec().also {
-            logQueries.insert(LogLevel.Info, "PHOTO", it)
+            logger.info(tag, it)
         }
         clickPowerButton.exec()
         swipeUp.exec()
         enterCode.exec()
         clickEnter.exec()
         startApp.exec().also {
-            logQueries.insert(LogLevel.Info, "PHOTO", "taking a picture")
+            logger.info(tag, "taking a picture")
         }
         Thread.sleep(10_000)
         clickPowerButton.exec()

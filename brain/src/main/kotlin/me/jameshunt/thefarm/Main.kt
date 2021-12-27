@@ -7,7 +7,7 @@ import me.jameshunt.brain.sql.LogQueries
 import java.io.File
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 fun main() {
@@ -15,16 +15,17 @@ fun main() {
     Database.Schema.create(driver)
     val database = Database(driver)
 
-    val timer = Timer()
-    val powerManager = PowerManager(database.logQueries)
+    val timer = ScheduledThreadPoolExecutor(4)
+    val logger = FarmLogger(database.logQueries)
+    val powerManager = PowerManager(logger)
 
-    val lightScheduler = LightScheduler(powerManager)
-    val waterScheduler = WaterScheduler(powerManager)
-    val photoScheduler = PhotoScheduler(database.logQueries)
+    val lightScheduler = LightScheduler(timer, powerManager, logger)
+    val waterScheduler = WaterScheduler(timer, powerManager, logger)
+    val photoScheduler = PhotoScheduler(timer, logger)
 
-    lightScheduler.schedule(timer)
-    waterScheduler.schedule(timer)
-    photoScheduler.schedule(timer)
+    lightScheduler.schedule()
+    waterScheduler.schedule()
+    photoScheduler.schedule()
 
     // infrequent or only at start unless fancy equipment
     // ph sensor - on solution
@@ -40,17 +41,17 @@ fun main() {
     // reservoir level sensor
 }
 
-enum class LogLevel {
-    Info,
-    Error
-}
+class FarmLogger(private val logQueries: LogQueries) {
+    fun info(tag: String, description: String) {
+        val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        logQueries.insert(time = time, level = "info", tag = tag, description = description, exception = null)
+        println("$time -- info --$tag\n$description")
+    }
 
-fun LogQueries.insert(level: LogLevel, tag: String, description: String) {
-    val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    this.insert(time = time, level = level.name, tag = tag, description = description)
-    println("$time -- $tag\n$description")
-
-    if (level == LogLevel.Error) {
+    fun error(tag: String, description: String, e: Exception) {
+        val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        logQueries.insert(time = time, level = "error", tag = tag, description = description, exception = e.stackTraceToString())
+        println("$time -- error --$tag\n$description\n${e.stackTraceToString()}")
         // TODO: maybe push notification?
     }
 }
@@ -63,6 +64,12 @@ fun String.exec(baseDir: File = File(mainDir)): String {
     val process = ProcessBuilder().directory(baseDir).command(split(" ").filter { it != " " })
         .start()!!
         .also { it.waitFor(10, TimeUnit.SECONDS) }
+
+    try {
+        process.exitValue()
+    } catch (e: IllegalThreadStateException) {
+        throw Exception("command timed out", e)
+    }
 
     if (process.exitValue() != 0) {
         throw Exception(process.errorStream.bufferedReader().readText())
