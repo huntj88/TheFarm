@@ -2,12 +2,13 @@ CREATE TABLE log
 (
     log_id      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     time        TEXT NOT NULL,
+    level       TEXT NOT NULL,
     tag         TEXT NOT NULL,
     description TEXT NOT NULL
 );
 
 insert:
-INSERT INTO log(time, tag, description)
-VALUES (?, ?, ?);
+INSERT INTO log(time, level, tag, description)
+VALUES (?, ?, ?, ?);
 
 

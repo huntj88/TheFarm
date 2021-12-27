@@ -17,6 +17,7 @@ fun main() {
 
     val timer = Timer()
     val powerManager = PowerManager(database.logQueries)
+
     val lightScheduler = LightScheduler(powerManager)
     val waterScheduler = WaterScheduler(powerManager)
     val photoScheduler = PhotoScheduler(database.logQueries)
@@ -39,10 +40,19 @@ fun main() {
     // reservoir level sensor
 }
 
-fun LogQueries.insert(tag: String, description: String) {
+enum class LogLevel {
+    Info,
+    Error
+}
+
+fun LogQueries.insert(level: LogLevel, tag: String, description: String) {
     val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    this.insert(time, tag, description)
+    this.insert(time = time, level = level.name, tag = tag, description = description)
     println("$time -- $tag\n$description")
+
+    if (level == LogLevel.Error) {
+        // TODO: maybe push notification?
+    }
 }
 
 

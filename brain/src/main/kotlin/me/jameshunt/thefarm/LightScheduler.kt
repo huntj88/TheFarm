@@ -10,6 +10,12 @@ import java.util.concurrent.TimeUnit
  * alternate implementation would be to check hourly for what the light intensity/spectrum should be and updating it
  */
 
+/**
+ * alternate alternate implementation would be to leverage the scheduling feature on the smart plug and use
+ * this scheduler to monitor that the plug is in the correct state, and fix it if its not.
+ * Maybe use a lux meter to send a push notification if power is on, but the light is off
+ */
+
 class LightScheduler(private val powerManager: PowerManager) {
     private val turnOnTime = LocalTime.of(7, 0)
     private val turnOffTime = turnOnTime.plusHours(12)
