@@ -5,12 +5,13 @@ import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import me.jameshunt.brain.sql.Database
 import me.jameshunt.brain.sql.LogQueries
 import java.io.File
+import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-fun main() {
+fun main(args: Array<String>) {
     val driver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY) // TODO: in memory should be on disk
     Database.Schema.create(driver)
     val database = Database(driver)
@@ -56,11 +57,7 @@ class FarmLogger(private val logQueries: LogQueries) {
     }
 }
 
-
-// TODO: env var
-const val mainDir: String = "/home/jameshunt/IdeaProjects/TheFarm"
-
-fun String.exec(baseDir: File = File(mainDir)): String {
+fun String.exec(baseDir: File = File(Path.of("").toAbsolutePath().toString())): String {
     val process = ProcessBuilder().directory(baseDir).command(split(" ").filter { it != " " })
         .start()!!
         .also { it.waitFor(10, TimeUnit.SECONDS) }

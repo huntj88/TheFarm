@@ -4,12 +4,20 @@ import me.jameshunt.thefarm.PowerManager.PlugAlias.Companion.id
 import java.io.File
 
 class PowerManager(private val logger: FarmLogger) {
-    // todo: env var
-    private val cliDirectory: File = File("/home/jameshunt/IdeaProjects/tplink-smartplug")
-
+    private val cliDirectory: File = File("tplink-smartplug")
     // todo: env var or autodiscovery
-    // private val powerStripIp: String = "192.168.1.82"
-    private val powerStripIp: String = "192.168.1.4"
+    private val powerStripIp: String = "192.168.1.82"
+
+    init {
+        when(cliDirectory.exists()) {
+            true -> logger.info("POWER", "cli already installed")
+            false -> {
+                logger.info("POWER", "installing cli")
+                // https so no auth required
+                "git clone https://github.com/huntj88/tplink-smartplug.git".exec()
+            }
+        }
+    }
 
     enum class PlugAlias(private val plugIndex: Int) {
         Water(0),

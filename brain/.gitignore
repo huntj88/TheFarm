@@ -1,3 +1,5 @@
 /src/main/kotlin/me/jameshunt/thefarm/IgnoreFile.kt
 /build
 /.gradle
+/tplink-smartplug
+/out/
