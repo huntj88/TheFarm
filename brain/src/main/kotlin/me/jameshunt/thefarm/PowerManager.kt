@@ -4,7 +4,7 @@ import me.jameshunt.thefarm.PowerManager.PlugAlias.Companion.id
 import java.io.File
 
 class PowerManager(private val logger: FarmLogger) {
-    private val cliDirectory: File = File("tplink-smartplug")
+    private val cliDirectory: File = File(libDirectory, "tplink-smartplug")
     // todo: env var or autodiscovery
     private val powerStripIp: String = "192.168.1.82"
 
@@ -14,7 +14,7 @@ class PowerManager(private val logger: FarmLogger) {
             false -> {
                 logger.info("POWER", "installing cli")
                 // https so no auth required
-                "git clone https://github.com/huntj88/tplink-smartplug.git".exec()
+                "git clone https://github.com/huntj88/tplink-smartplug.git".exec(libDirectory)
             }
         }
     }

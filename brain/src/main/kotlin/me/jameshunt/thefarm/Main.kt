@@ -57,10 +57,16 @@ class FarmLogger(private val logQueries: LogQueries) {
     }
 }
 
+val libDirectory = File("libs").also {
+    if (!it.exists()) {
+        it.mkdir()
+    }
+}
+
 fun String.exec(baseDir: File = File(Path.of("").toAbsolutePath().toString())): String {
     val process = ProcessBuilder().directory(baseDir).command(split(" ").filter { it != " " })
         .start()!!
-        .also { it.waitFor(10, TimeUnit.SECONDS) }
+        .also { it.waitFor(20, TimeUnit.SECONDS) }
 
     try {
         process.exitValue()

@@ -25,6 +25,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val runId = intent.getIntExtra("runId", -1)
+        val destinationIp = intent.getStringExtra("destinationIp")
+            ?: throw IllegalStateException("destinationIp required")
 
         val imageCapture = ImageCapture.Builder()
             .setFlashMode(FLASH_MODE_ON)
@@ -52,7 +54,7 @@ class MainActivity : AppCompatActivity() {
                             Log.d(
                                 "Main", "took picture with size: ${saveFile.readBytes().size}"
                             )
-                            uploadTimeStampedFile(saveFile, runId)
+                            uploadTimeStampedFile(saveFile, runId, destinationIp)
                         }
                     }
                 )
@@ -60,10 +62,10 @@ class MainActivity : AppCompatActivity() {
         }, mainExecutor)
     }
 
-    fun uploadTimeStampedFile(file: File, runId: Int) {
+    fun uploadTimeStampedFile(file: File, runId: Int, destinationIp: String) {
         Executors.newSingleThreadExecutor().execute {
             val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            getMinioClient().uploadObject(
+            getMinioClient(destinationIp).uploadObject(
                 UploadObjectArgs.builder()
                     .bucket("images")
                     .`object`("$time.jpg")
@@ -74,9 +76,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getMinioClient(): MinioClient {
+    private fun getMinioClient(destinationIp: String): MinioClient {
         return MinioClient.builder()
-            .endpoint("192.168.1.78", 9000, false)
+            .endpoint(destinationIp, 9000, false)
             .credentials("minioadmin", "minioadmin")
             .build()
     }
