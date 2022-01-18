@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>) {
-    val driver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY) // TODO: in memory should be on disk
+    val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:farm.db") // TODO: in memory should be on disk
     Database.Schema.create(driver)
     val database = Database(driver)
 
@@ -22,11 +22,11 @@ fun main(args: Array<String>) {
 
     val lightScheduler = LightScheduler(timer, powerManager, logger)
     val waterScheduler = WaterScheduler(timer, powerManager, logger)
-    val photoScheduler = PhotoScheduler(timer, logger)
+//    val photoScheduler = PhotoScheduler(timer, logger)
 
     lightScheduler.schedule()
     waterScheduler.schedule()
-    photoScheduler.schedule()
+//    photoScheduler.schedule()
 
     // infrequent or only at start unless fancy equipment
     // ph sensor - on solution
@@ -35,6 +35,13 @@ fun main(args: Array<String>) {
     // frequent reading
     // humidity sensor
     // pressure sensor
+    // water flow sensor
+
+    // if I have one solenoid per nozzle or small group of nozzles, maybe I can detect nozzle clogs by measuring
+    // pressure drop or using a water flow sensor
+
+    // TODO: scheduling system that ensures only one solenoid per tank is open at a time for nozzle clog detection
+
     // light sensor
     // temp sensor
     // photo
