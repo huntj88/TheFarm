@@ -7,19 +7,19 @@ import java.util.concurrent.TimeUnit
 class WaterScheduler(
     private val timer: ScheduledThreadPoolExecutor,
     private val powerManager: PowerManager,
-    private val logger: FarmLogger
+    private val logger: TypedFarmLogger<WaterScheduler>
 ) {
     private val tag = "WATER"
 
     private val turnOnWaterTask = Runnable {
         try {
             powerManager.setState(PlugAlias.Water, on = true)
-            logger.info(tag, "started watering")
+            logger.info("started watering")
             Thread.sleep(5 * 1000L)
             powerManager.setState(PlugAlias.Water, on = false)
-            logger.info(tag, "finished watering")
+            logger.info("finished watering")
         } catch (e: Exception) {
-            logger.error(tag, "watering error", e)
+            logger.error("watering error", e)
         }
     }
 

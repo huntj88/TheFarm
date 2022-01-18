@@ -3,16 +3,16 @@ package me.jameshunt.thefarm
 import me.jameshunt.thefarm.PowerManager.PlugAlias.Companion.id
 import java.io.File
 
-class PowerManager(private val logger: FarmLogger) {
+class PowerManager(private val logger: TypedFarmLogger<PowerManager>) {
     private val cliDirectory: File = File(libDirectory, "tplink-smartplug")
     // todo: env var or autodiscovery
     private val powerStripIp: String = "192.168.1.82"
 
     init {
         when(cliDirectory.exists()) {
-            true -> logger.info("POWER", "cli already installed")
+            true -> logger.info("cli already installed")
             false -> {
-                logger.info("POWER", "installing cli")
+                logger.info("installing cli")
                 // https so no auth required
                 "git clone https://github.com/huntj88/tplink-smartplug.git".exec(libDirectory)
             }
@@ -35,9 +35,9 @@ class PowerManager(private val logger: FarmLogger) {
         val setState = """{"context":{"child_ids":["${plugAlias.id}"]},"system":{"set_relay_state":{"state":$state}}}"""
         try {
             val response = setState.executeJsonCommand()
-            logger.info("POWER", "Command: $setState, Response: $response")
+            logger.info("Command: $setState, Response: $response")
         } catch (e: Exception) {
-            logger.error("POWER", "Command: $setState", e)
+            logger.error("Command: $setState", e)
             throw e
         }
     }

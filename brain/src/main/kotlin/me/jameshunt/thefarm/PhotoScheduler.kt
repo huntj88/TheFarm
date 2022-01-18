@@ -6,17 +6,19 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 // TODO: adb does not work by default on raspberry pi (armv7)
-class PhotoScheduler(private val timer: ScheduledThreadPoolExecutor, private val logger: FarmLogger) {
-    private val tag = "PHOTO"
+class PhotoScheduler(
+    private val timer: ScheduledThreadPoolExecutor,
+    private val logger: TypedFarmLogger<PhotoScheduler>
+) {
     private val androidPhoneIp = "192.168.1.73" // TODO: configurable
 
-    private val platformToolsDirectory: File = File(libDirectory,"platform-tools")
+    private val platformToolsDirectory: File = File(libDirectory, "platform-tools")
 
     init {
-        when(platformToolsDirectory.exists()) {
-            true -> logger.info(tag, "adb already installed")
+        when (platformToolsDirectory.exists()) {
+            true -> logger.info("adb already installed")
             false -> {
-                logger.info(tag, "installing adb")
+                logger.info("installing adb")
                 "wget https://dl.google.com/android/repository/platform-tools-latest-linux.zip".exec(libDirectory)
                 "unzip -q platform-tools-latest-linux".exec(libDirectory)
                 "rm platform-tools-latest-linux.zip".exec(libDirectory)
@@ -29,7 +31,7 @@ class PhotoScheduler(private val timer: ScheduledThreadPoolExecutor, private val
         try {
             takeAndroidPhoto(runId)
         } catch (e: Exception) {
-            logger.error(tag, "error taking a picture", e)
+            logger.error("error taking a picture", e)
         }
     }
 
@@ -50,14 +52,14 @@ class PhotoScheduler(private val timer: ScheduledThreadPoolExecutor, private val
 
 
         adbConnect.exec(platformToolsDirectory).also {
-            logger.info(tag, it)
+            logger.info(it)
         }
         clickPowerButton.exec(platformToolsDirectory)
         swipeUp.exec(platformToolsDirectory)
         enterCode.exec(platformToolsDirectory)
         clickEnter.exec(platformToolsDirectory)
         startApp.exec(platformToolsDirectory).also {
-            logger.info(tag, "taking a picture")
+            logger.info("taking a picture")
         }
         Thread.sleep(10_000)
         clickPowerButton.exec(platformToolsDirectory)

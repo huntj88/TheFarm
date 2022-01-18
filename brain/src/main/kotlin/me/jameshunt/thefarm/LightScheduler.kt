@@ -20,27 +20,26 @@ import java.util.concurrent.TimeUnit
 class LightScheduler(
     private val timer: ScheduledThreadPoolExecutor,
     private val powerManager: PowerManager,
-    private val logger: FarmLogger
+    logger: TypedFarmLogger<LightScheduler>
 ) {
-    private val tag = "LIGHT"
     private val turnOnTime = LocalTime.of(7, 0)
     private val turnOffTime = turnOnTime.plusHours(12)
 
     private val turnOnLights = Runnable {
         try {
             powerManager.setState(PlugAlias.Lights, on = true)
-            logger.info(tag, "turned lights on")
+            logger.info("turned lights on")
         } catch (e: Exception) {
-            logger.error(tag, "lighting on error", e)
+            logger.error("lighting on error", e)
             retry()
         }
     }
     private val turnOffLights = Runnable {
         try {
             powerManager.setState(PlugAlias.Lights, on = false)
-            logger.info(tag, "turned lights off")
+            logger.info("turned lights off")
         } catch (e: Exception) {
-            logger.error(tag, "lighting off error", e)
+            logger.error("lighting off error", e)
             retry()
         }
     }

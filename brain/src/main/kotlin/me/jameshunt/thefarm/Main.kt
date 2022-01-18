@@ -18,10 +18,10 @@ fun main(args: Array<String>) {
 
     val timer = ScheduledThreadPoolExecutor(4)
     val logger = FarmLogger(database.logQueries)
-    val powerManager = PowerManager(logger)
+    val powerManager = PowerManager(logger.asTyped())
 
-    val lightScheduler = LightScheduler(timer, powerManager, logger)
-    val waterScheduler = WaterScheduler(timer, powerManager, logger)
+    val lightScheduler = LightScheduler(timer, powerManager, logger.asTyped())
+    val waterScheduler = WaterScheduler(timer, powerManager, logger.asTyped())
 //    val photoScheduler = PhotoScheduler(timer, logger)
 
     lightScheduler.schedule()
@@ -61,6 +61,20 @@ class FarmLogger(private val logQueries: LogQueries) {
         logQueries.insert(time = time, level = "error", tag = tag, description = description, exception = e.stackTraceToString())
         println("$time -- error --$tag\n$description\n${e.stackTraceToString()}")
         // TODO: maybe push notification?
+    }
+
+    inline fun <reified T> asTyped(): TypedFarmLogger<T> {
+        return TypedFarmLogger(this, T::class.java)
+    }
+}
+
+class TypedFarmLogger<T>(private val farmLogger: FarmLogger, private val clazz: Class<T>) {
+    fun info(description: String) {
+        farmLogger.info(clazz.simpleName, description)
+    }
+
+    fun error(description: String, e: Exception) {
+        farmLogger.error(clazz.simpleName, description, e)
     }
 }
 
