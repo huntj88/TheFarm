@@ -46,3 +46,8 @@ class PowerManager(private val logger: TypedFarmLogger<PowerManager>) {
         return "./tplink_smartplug.py -t $powerStripIp -j $this".exec(baseDir = cliDirectory)
     }
 }
+
+// POWER MONITORING
+// ./tplink_smartplug.py -t 192.168.1.82 -j '{"emeter":{"get_realtime":{}},"context":{"child_ids":["8006D4C79A1D2CE0935A5A79B28D00291F06E0D100"]}}'
+// ./tplink_smartplug.py -t 192.168.1.82 -j '{"emeter":{"get_monthstat":{"year":2022}},"context":{"child_ids":["8006D4C79A1D2CE0935A5A79B28D00291F06E0D100"]}}'
+// ./tplink_smartplug.py -t 192.168.1.82 -j '{"emeter":{"get_daystat":{"month":3,"year":2022}},"context":{"child_ids":["8006D4C79A1D2CE0935A5A79B28D00291F06E0D100"]}}'
