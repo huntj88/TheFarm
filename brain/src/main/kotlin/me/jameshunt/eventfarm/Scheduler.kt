@@ -2,42 +2,11 @@ package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.kotlin.toCompletable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
-
-// could be a PID controller or something
-class VPDController(
-    private val scheduler: Scheduler,
-    private val inputEventManager: InputEventManager,
-    private val vpdInputId: UUID,
-    private val humidifierOutputId: UUID
-) {
-    fun handle(): Disposable {
-        return inputEventManager
-            .getEventStream()
-            .filter { it.inputId == vpdInputId }
-            .filter {
-                val vpd = it.value as TypedValue.Pascal
-                vpd.value > 925
-            }
-            .subscribe {
-                val startTime = Instant.now()
-                val endTime = startTime.plusSeconds(5)
-                scheduler.schedule(
-                    Scheduler.ScheduleItem(
-                        humidifierOutputId,
-                        TypedValue.Bool(true),
-                        startTime,
-                        endTime
-                    )
-                )
-            }
-    }
-}
 
 class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
@@ -79,6 +48,9 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
         }
     }
 
+    // TODO: what if i drop self schedulable, and instead made device its own controller,
+    // TODO: or even control multiple devices that maybe need an exclusive lock on a resource
+    // (like ec and ph probes on the water reservoir)
     fun addSelfSchedulable(schedulable: SelfSchedulable) {
         synchronized(this) {
             val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
@@ -87,13 +59,20 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
         }
     }
 
+    // TODO: create lock on each thing to be schedule using its id
+    // TODO: lock is to prevent conflicting commands
+    // example: two commands several seconds apart. (first turns on, second turns on, first turns off, second turns off)
+    // this is bad because it should probably be something more like (first turns on, second turns off), and drop the middle states
+
     private val scheduleStream = PublishSubject.create<ScheduleItem>()
-    fun loop(): Disposable = Executors.newSingleThreadExecutor().submit {
+    fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {
+            val waiting = waiting
+            val running = running
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
-            println(starting)
+//            println(starting)
             starting.forEach { scheduleStream.onNext(it.scheduleItem) }
 
             val withoutEnd = starting.filter { it.scheduleItem.endTime == null }
@@ -101,6 +80,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             running.addAll(endable)
             running.sortBy { it.scheduleItem.endTime!! }
             val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
+            running.removeAll(ending)
             ending.forEach { scheduleStream.onNext(it.scheduleItem) }
 
             val newScheduleItems = (withoutEnd + ending).mapNotNull {
@@ -113,9 +93,11 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             waiting.sortBy { it.scheduleItem.startTime }
 
             Thread.sleep(1000) // TODO: much faster loop time
+            // todo: check elapsed time to ensure scheduling thread is never blocked unless flag set or something for debugging
         }
-    }.toCompletable().subscribe(
-        { throw IllegalStateException("should not ever complete") },
-        { throw it }
-    )
+    }
+//        .toCompletable().subscribe(
+//        { throw IllegalStateException("should not ever complete") },
+//        { throw it }
+//    )
 }

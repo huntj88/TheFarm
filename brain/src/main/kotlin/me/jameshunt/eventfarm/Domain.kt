@@ -26,8 +26,8 @@ interface Input {
     fun getInputEvents(): Observable<InputEvent>
 }
 
-interface Output {
-    val id: UUID
+interface Output: Scheduler.Schedulable {
+    override val id: UUID
 }
 
 // functions get access to DI tree?

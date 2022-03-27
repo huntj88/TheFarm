@@ -14,18 +14,14 @@ fun getVPDInput(getInputEventManager: () -> InputEventManager): Input {
         inputEventManager = { getInputEventManager() })
 }
 
-fun getVPDController(scheduler: Scheduler, inputEventManager: InputEventManager): VPDController {
-    val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
-    val humidifierOutputId = "00000000-0000-0000-0000-000000000152".let { UUID.fromString(it) }
-    return VPDController(scheduler, inputEventManager, vpdInputId, humidifierOutputId)
-}
-
 class DI {
     val compositeDisposable = CompositeDisposable()
     val devices = listOf(createPowerStrip(), createAtlasScientficiEzoHum())
     val inputs: List<Input> = devices.flatMap { it.inputs } + listOf(getVPDInput { inputEventManager })
     val outputs: List<Output> = devices.flatMap { it.outputs }
-    val inputEventManager: InputEventManager = InputEventManager(inputs)
+    val inputEventManager: InputEventManager = InputEventManager().apply {
+        inputs.forEach { addInput(it) }
+    }
 
     // in dagger bind schedulable
     val schedulable =
@@ -33,11 +29,12 @@ class DI {
 
     val scheduler: Scheduler = Scheduler(getSchedulable = { findId -> schedulable.first { it.id == findId } }).apply {
         schedulable.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { addSelfSchedulable(it) }
-        compositeDisposable.add(this.loop())
+//        compositeDisposable.add(this.loop())
+        loop()
     }
 
     val vpdController = getVPDController(scheduler, inputEventManager).apply {
-        compositeDisposable.add(handle())
+//        compositeDisposable.add(handle())
     }
 
     fun pidIntervalsUsingBuffer() {

@@ -121,7 +121,8 @@ class PowerStrip(
         }
 
         private fun setState(on: Boolean) {
-            TODO()
+            println("set state: $on")
+        // TODO()
         }
     }
 }

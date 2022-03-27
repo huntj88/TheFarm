@@ -8,6 +8,7 @@ import me.jameshunt.eventfarm.AtlasScientificEzoHum.TemperatureInput
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 // lambda might be a Provider<InputEventManager> in dagger
 class VPDFunction(private val config: Config, private val inputEventManager: () -> InputEventManager) : Input {
@@ -23,10 +24,16 @@ class VPDFunction(private val config: Config, private val inputEventManager: () 
 
         return Observable.combineLatest(t, h) { temp, humidity ->
             Input.InputEvent(id, Instant.now(), calcVPD(temp.value, humidity.value))
-        }
+        }.debounce(100, TimeUnit.MILLISECONDS)
     }
 
-    private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue = TODO()
+    private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {
+        val tempValue = (temp as? TypedValue.Celsius)?.value ?: throw IllegalArgumentException("expected celsius")
+        val humidityValue = (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
+
+        // TODO: correct math
+        return TypedValue.Pascal(950f)
+    }
 }
 
 fun createAtlasScientficiEzoHum(): Device {
@@ -68,8 +75,13 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         }
 
         override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fiveSecondsLater = previousCompleted?.startTime?.plus(5, ChronoUnit.SECONDS)
-            val startTime = fiveSecondsLater ?: Instant.now()
+            val fiveSecondsAfterLast = previousCompleted?.startTime?.plus(5, ChronoUnit.SECONDS)
+            val now = Instant.now()
+            val startTime = if (fiveSecondsAfterLast?.isBefore(now) == true) {
+                now
+            } else {
+                fiveSecondsAfterLast ?: now
+            }
             return Scheduler.ScheduleItem(
                 id,
                 TypedValue.None,
@@ -106,8 +118,14 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         }
 
         override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fifteenSecondsLater = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
-            val startTime = fifteenSecondsLater ?: Instant.now()
+            val fifteenSecondsAfterLast = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
+            val now = Instant.now()
+            val startTime = if (fifteenSecondsAfterLast?.isBefore(now) == true) {
+                now
+            } else {
+                fifteenSecondsAfterLast ?: now
+            }
+
             return Scheduler.ScheduleItem(
                 id,
                 TypedValue.None,
