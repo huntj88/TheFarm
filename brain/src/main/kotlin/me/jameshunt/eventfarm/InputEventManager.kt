@@ -12,9 +12,8 @@ class InputEventManager(private val inputs: List<Input>) : IInputEventManager {
     // instead of being initialized with everything needed
     override fun getEventStream(): Observable<Input.InputEvent> {
         val retryInputs = inputs.map {
-            it.getInputEvents().retryWhen {
-                Observable.timer(30, TimeUnit.SECONDS)
-            }
+            it.getInputEvents()
+//                .retryWhen { Observable.timer(30, TimeUnit.SECONDS) }
         }
         return (1 until retryInputs.size)
             .map { retryInputs[it] }

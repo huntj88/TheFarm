@@ -32,4 +32,5 @@ dependencies {
     implementation "com.squareup.sqldelight:sqlite-driver:1.5.3"
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation "com.squareup.sqldelight:rxjava3-extensions:1.5.1"
+    implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
 }

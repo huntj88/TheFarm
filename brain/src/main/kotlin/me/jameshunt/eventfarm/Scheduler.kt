@@ -47,7 +47,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
         val endTime: Instant?
     ) {
         val isStarting: Boolean
-            get() = Instant.now() < endTime
+            get() = endTime == null || Instant.now() < endTime
 
         val isEnding: Boolean
             get() = endTime != null && Instant.now() >= endTime
@@ -93,15 +93,17 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
+            println(starting)
             starting.forEach { scheduleStream.onNext(it.scheduleItem) }
 
+            val withoutEnd = starting.filter { it.scheduleItem.endTime == null }
             val endable = starting.filter { it.scheduleItem.endTime != null }
             running.addAll(endable)
             running.sortBy { it.scheduleItem.endTime!! }
             val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
             ending.forEach { scheduleStream.onNext(it.scheduleItem) }
 
-            val newScheduleItems = ending.mapNotNull {
+            val newScheduleItems = (withoutEnd + ending).mapNotNull {
                 if (it.schedulable !is SelfSchedulable) return@mapNotNull null
                 it.schedulable to it.scheduleItem
             }.map { (schedulable, scheduleItem) ->
@@ -110,7 +112,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             waiting.addAll(newScheduleItems)
             waiting.sortBy { it.scheduleItem.startTime }
 
-            Thread.sleep(100) // TODO: much faster loop time
+            Thread.sleep(1000) // TODO: much faster loop time
         }
     }.toCompletable().subscribe(
         { throw IllegalStateException("should not ever complete") },

@@ -68,8 +68,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         }
 
         override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fiveMinutesLater = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
-            val startTime = fiveMinutesLater ?: Instant.now()
+            val fiveSecondsLater = previousCompleted?.startTime?.plus(5, ChronoUnit.SECONDS)
+            val startTime = fiveSecondsLater ?: Instant.now()
             return Scheduler.ScheduleItem(
                 id,
                 TypedValue.None,
@@ -106,8 +106,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         }
 
         override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fiveMinutesLater = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
-            val startTime = fiveMinutesLater ?: Instant.now()
+            val fifteenSecondsLater = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
+            val startTime = fifteenSecondsLater ?: Instant.now()
             return Scheduler.ScheduleItem(
                 id,
                 TypedValue.None,
