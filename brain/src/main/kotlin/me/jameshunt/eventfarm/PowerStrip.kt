@@ -17,7 +17,7 @@ fun createPowerStrip(): Device {
             wattInput = PowerStrip.WattInput(
                 PowerStrip.WattInput.Config(
                     name = "Total watts being used for all devices",
-                    id = UUID.randomUUID(),
+                    id = "00000000-0000-0000-0000-000000000000".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -25,7 +25,7 @@ fun createPowerStrip(): Device {
             wattHourInput = PowerStrip.WattHourInput(
                 PowerStrip.WattHourInput.Config(
                     name = "total watt hours used for all devices",
-                    id = UUID.randomUUID(),
+                    id = "00000000-0000-0000-0000-000000000001".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -33,7 +33,7 @@ fun createPowerStrip(): Device {
             onOffOutput = PowerStrip.OnOffOutput(
                 PowerStrip.OnOffOutput.Config(
                     name = "turn plug on or off at position: $index",
-                    id = UUID.randomUUID(),
+                    id = "00000000-0000-0000-0000-000000000002".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -45,7 +45,7 @@ fun createPowerStrip(): Device {
         totalWattInput = PowerStrip.WattInput(
             PowerStrip.WattInput.Config(
                 "Total watts being used for all devices",
-                UUID.randomUUID(),
+                "00000000-0000-0000-0000-000000000003".let { UUID.fromString(it) },
                 ip,
                 null
             )
@@ -53,7 +53,7 @@ fun createPowerStrip(): Device {
         totalWattHourInput = PowerStrip.WattHourInput(
             PowerStrip.WattHourInput.Config(
                 "total watt hours used for all devices",
-                UUID.randomUUID(),
+                "00000000-0000-0000-0000-000000000004".let { UUID.fromString(it) },
                 ip,
                 null
             )

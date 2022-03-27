@@ -1,11 +1,21 @@
 package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import java.util.*
 import java.util.concurrent.TimeUnit
+
+fun getVPDInput(getInputEventManager: () -> InputEventManager): Input {
+    val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
+    val tempInputId = "00000000-0000-0000-0000-000000000005".let { UUID.fromString(it) }
+    val humidityInputId = "00000000-0000-0000-0000-000000000006".let { UUID.fromString(it) }
+    return VPDFunction(
+        VPDFunction.Config(vpdInputId, tempInputId, humidityInputId),
+        inputEventManager = { getInputEventManager() })
+}
 
 class DI {
     val devices = listOf(createPowerStrip(), createAtlasScientficiEzoHum())
-    val inputs: List<Input> = devices.flatMap { it.inputs }
+    val inputs: List<Input> = devices.flatMap { it.inputs } + listOf(getVPDInput { inputEventManager })
     val outputs: List<Output> = devices.flatMap { it.outputs }
     val inputEventManager: InputEventManager = InputEventManager(inputs)
     val compositeDisposable = CompositeDisposable()
