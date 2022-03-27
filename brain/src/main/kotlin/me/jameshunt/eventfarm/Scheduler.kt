@@ -9,7 +9,37 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
-class Scheduler {
+// could be a PID controller or something
+class VPDController(
+    private val scheduler: Scheduler,
+    private val inputEventManager: InputEventManager,
+    private val vpdInputId: UUID,
+    private val humidifierOutputId: UUID
+) {
+    fun handle(): Disposable {
+        return inputEventManager
+            .getEventStream()
+            .filter { it.inputId == vpdInputId }
+            .filter {
+                val vpd = it.value as TypedValue.Pascal
+                vpd.value > 925
+            }
+            .subscribe {
+                val startTime = Instant.now()
+                val endTime = startTime.plusSeconds(5)
+                scheduler.schedule(
+                    Scheduler.ScheduleItem(
+                        humidifierOutputId,
+                        TypedValue.Bool(true),
+                        startTime,
+                        endTime
+                    )
+                )
+            }
+    }
+}
+
+class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
         val id: UUID, // id of thing that will be scheduled
         val data: TypedValue,
@@ -40,8 +70,9 @@ class Scheduler {
     private val waiting: LinkedList<ScheduleWrapper> = LinkedList()
     private val running: LinkedList<ScheduleWrapper> = LinkedList()
 
-    fun schedule(schedulable: Schedulable, item: ScheduleItem) {
+    fun schedule(item: ScheduleItem) {
         synchronized(this) {
+            val schedulable = getSchedulable(item.id)
             val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
             schedulable.listenForSchedule(scheduleForId)
             waiting.add(ScheduleWrapper(schedulable, item))
@@ -62,9 +93,6 @@ class Scheduler {
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
-
-            // todo: call on thread pool?
-            // todo: or keep this single threaded, but make sure all actions are handled using appropriate rx java scheduler
             starting.forEach { scheduleStream.onNext(it.scheduleItem) }
 
             val endable = starting.filter { it.scheduleItem.endTime != null }

@@ -3,7 +3,8 @@ package me.jameshunt.eventfarm
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.subjects.PublishSubject
-import me.jameshunt.eventfarm.AtlasScientificEzoHum.*
+import me.jameshunt.eventfarm.AtlasScientificEzoHum.HumidityInput
+import me.jameshunt.eventfarm.AtlasScientificEzoHum.TemperatureInput
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -11,7 +12,9 @@ import java.util.*
 // lambda might be a Provider<InputEventManager> in dagger
 class VPDFunction(private val config: Config, private val inputEventManager: () -> InputEventManager) : Input {
     data class Config(val id: UUID, val temperatureId: UUID, val humidityId: UUID)
+
     override val id: UUID = config.id
+
     // takes the event stream, grabs measurements it needs and spits out a new measurement calculated from other input
     // normal input might just be on a timer grabbing sensor data
     override fun getInputEvents(): Observable<Input.InputEvent> {
@@ -52,12 +55,12 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
 
         private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            disposable?.dispose()// TODO: can i not subscribe to the new one and use existing subscription?
+            if (disposable.hasInitialized()) return
+
             disposable = onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        val value = getSensorValue()
-                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), value))
+                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }
@@ -90,12 +93,12 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
 
         private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            disposable?.dispose()// TODO: can i not subscribe to the new one and use existing subscription?
+            if (disposable.hasInitialized()) return
+
             disposable = onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        val value = getSensorValue()
-                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), value))
+                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }

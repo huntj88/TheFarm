@@ -17,7 +17,7 @@ fun createPowerStrip(): Device {
             wattInput = PowerStrip.WattInput(
                 PowerStrip.WattInput.Config(
                     name = "Total watts being used for all devices",
-                    id = "00000000-0000-0000-0000-000000000000".let { UUID.fromString(it) },
+                    id = "00000000-0000-0000-0000-0000000001${index}0".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -25,7 +25,7 @@ fun createPowerStrip(): Device {
             wattHourInput = PowerStrip.WattHourInput(
                 PowerStrip.WattHourInput.Config(
                     name = "total watt hours used for all devices",
-                    id = "00000000-0000-0000-0000-000000000001".let { UUID.fromString(it) },
+                    id = "00000000-0000-0000-0000-0000000001${index}1".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -33,7 +33,7 @@ fun createPowerStrip(): Device {
             onOffOutput = PowerStrip.OnOffOutput(
                 PowerStrip.OnOffOutput.Config(
                     name = "turn plug on or off at position: $index",
-                    id = "00000000-0000-0000-0000-000000000002".let { UUID.fromString(it) },
+                    id = "00000000-0000-0000-0000-0000000001${index}2".let { UUID.fromString(it) },
                     ip = ip,
                     index = index
                 )
@@ -107,7 +107,8 @@ class PowerStrip(
 
         private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            disposable?.dispose() // TODO: can i not subscribe to the new one and use existing subscription?
+            if (disposable.hasInitialized()) return
+
             disposable = onSchedule.subscribe({
                 val requestedState = (it.data as? TypedValue.Bool)?.value
                     ?: throw IllegalArgumentException("expected Bool")

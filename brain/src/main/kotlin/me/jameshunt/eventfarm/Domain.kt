@@ -17,7 +17,6 @@ sealed class TypedValue {
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
-    data class VaporPressureDeficit(val value: Float) : TypedValue()
 }
 
 interface Input {
