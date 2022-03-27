@@ -1,6 +1,7 @@
 package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
 import java.time.Instant
 import java.util.*
 
@@ -62,9 +63,9 @@ fun createPowerStrip(): Device {
 }
 
 class PowerStrip(
-    private val totalWattInput: WattInput,
-    private val totalWattHourInput: WattHourInput,
-    private val channels: List<Channel>
+    totalWattInput: WattInput,
+    totalWattHourInput: WattHourInput,
+    channels: List<Channel>
 ) : Device {
 
     class Channel(
@@ -73,11 +74,9 @@ class PowerStrip(
         val onOffOutput: OnOffOutput
     )
 
-    override val inputs: List<Input>
-        get() = listOf(totalWattInput, totalWattHourInput) + channels.flatMap { listOf(it.wattInput, it.wattHourInput) }
-
-    override val outputs: List<Output>
-        get() = channels.map { it.onOffOutput }
+    override val inputs: List<Input> =
+        listOf(totalWattInput, totalWattHourInput) + channels.flatMap { listOf(it.wattInput, it.wattHourInput) }
+    override val outputs: List<Output> = channels.map { it.onOffOutput }
 
     class WattInput(private val config: Config) : Input {
         data class Config(val name: String, val id: UUID, val ip: String, val index: Int?)
@@ -106,9 +105,10 @@ class PowerStrip(
 
         override val id: UUID = config.id
 
+        private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            // TODO: handle disposable
-            onSchedule.subscribe({
+            disposable?.dispose() // TODO: can i not subscribe to the new one and use existing subscription?
+            disposable = onSchedule.subscribe({
                 val requestedState = (it.data as? TypedValue.Bool)?.value
                     ?: throw IllegalArgumentException("expected Bool")
 

@@ -1,7 +1,9 @@
 package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.subjects.PublishSubject
+import me.jameshunt.eventfarm.AtlasScientificEzoHum.*
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -24,12 +26,17 @@ class VPDFunction(override val id: UUID, private val inputEventManager: () -> In
     private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue = TODO()
 }
 
-class AtlasScientificEzoHum : Device {
-    override val inputs: List<Input> = emptyList()
+fun createAtlasScientficiEzoHum(): Device {
+    val tempInput = TemperatureInput(TemperatureInput.Config("temp", UUID.randomUUID()))
+    return AtlasScientificEzoHum(tempInput)
+}
+
+class AtlasScientificEzoHum(temperatureInput: TemperatureInput) : Device {
+    override val inputs: List<Input> = listOf(temperatureInput)
     override val outputs: List<Output> = emptyList()
 
     class TemperatureInput(config: Config) : Input, Scheduler.SelfSchedulable {
-        data class Config(val name: String, val id: UUID, val ip: String)
+        data class Config(val name: String, val id: UUID)
 
         override val id: UUID = config.id
         private val inputEventStream = PublishSubject.create<Input.InputEvent>()
@@ -37,13 +44,13 @@ class AtlasScientificEzoHum : Device {
         override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
 
         private fun getSensorValue(): TypedValue {
-            // TODO
             return TypedValue.Celsius(20f)
         }
 
+        private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            // TODO: handle disposable
-            onSchedule.subscribe(
+            disposable?.dispose()// TODO: can i not subscribe to the new one and use existing subscription?
+            disposable = onSchedule.subscribe(
                 {
                     if (it.isStarting) {
                         val value = getSensorValue()
@@ -54,11 +61,11 @@ class AtlasScientificEzoHum : Device {
             )
         }
 
-        override fun schedule(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fiveMinutesLater = previousCompleted?.startTime?.plus(5, ChronoUnit.MINUTES)
+        override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
+            val fiveMinutesLater = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
             val startTime = fiveMinutesLater ?: Instant.now()
             return Scheduler.ScheduleItem(
-                UUID.randomUUID(), // TODO
+                id,
                 TypedValue.None,
                 startTime,
                 null

@@ -3,6 +3,7 @@ package me.jameshunt.eventfarm
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.toCompletable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
 import java.util.*
@@ -24,13 +25,11 @@ class Scheduler {
 
     interface Schedulable {
         val id: UUID
-        // completed is null if first init
-//        fun onScheduled(): Observable<ScheduleItem>
         fun listenForSchedule(onSchedule: Observable<ScheduleItem>)
     }
 
     interface SelfSchedulable : Schedulable {
-        fun schedule(previousCompleted: ScheduleItem?): ScheduleItem
+        fun scheduleNext(previousCompleted: ScheduleItem?): ScheduleItem
     }
 
     private data class ScheduleWrapper(
@@ -43,15 +42,17 @@ class Scheduler {
 
     fun schedule(schedulable: Schedulable, item: ScheduleItem) {
         synchronized(this) {
-            schedulable.listenForSchedule(scheduleStream.filter { it.id == schedulable.id })
+            val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
+            schedulable.listenForSchedule(scheduleForId)
             waiting.add(ScheduleWrapper(schedulable, item))
         }
     }
 
     fun addSelfSchedulable(schedulable: SelfSchedulable) {
         synchronized(this) {
-            schedulable.listenForSchedule(scheduleStream.filter { it.id == schedulable.id })
-            waiting.add(ScheduleWrapper(schedulable, schedulable.schedule(null)))
+            val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
+            schedulable.listenForSchedule(scheduleForId)
+            waiting.add(ScheduleWrapper(schedulable, schedulable.scheduleNext(null)))
         }
     }
 
@@ -76,7 +77,7 @@ class Scheduler {
                 if (it.schedulable !is SelfSchedulable) return@mapNotNull null
                 it.schedulable to it.scheduleItem
             }.map { (schedulable, scheduleItem) ->
-                ScheduleWrapper(schedulable, schedulable.schedule(previousCompleted = scheduleItem))
+                ScheduleWrapper(schedulable, schedulable.scheduleNext(previousCompleted = scheduleItem))
             }
             waiting.addAll(newScheduleItems)
             waiting.sortBy { it.scheduleItem.startTime }
