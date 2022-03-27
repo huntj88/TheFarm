@@ -28,7 +28,7 @@ class AtlasScientificEzoHum : Device {
     override val inputs: List<Input> = emptyList()
     override val outputs: List<Output> = emptyList()
 
-    class TemperatureInput(config: Config) : Input, Scheduler.Schedulable {
+    class TemperatureInput(config: Config) : Input, Scheduler.SelfSchedulable {
         data class Config(val name: String, val id: UUID, val ip: String)
 
         override val id: UUID = config.id
@@ -41,18 +41,27 @@ class AtlasScientificEzoHum : Device {
             return TypedValue.Celsius(20f)
         }
 
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+            // TODO: handle disposable
+            onSchedule.subscribe(
+                {
+                    if (it.isStarting) {
+                        val value = getSensorValue()
+                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), value))
+                    }
+                },
+                { throw it }
+            )
+        }
+
         override fun schedule(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
             val fiveMinutesLater = previousCompleted?.startTime?.plus(5, ChronoUnit.MINUTES)
             val startTime = fiveMinutesLater ?: Instant.now()
             return Scheduler.ScheduleItem(
+                UUID.randomUUID(), // TODO
+                TypedValue.None,
                 startTime,
-                null,
-                onStart = {
-                    inputEventStream.onNext(Input.InputEvent(id, Instant.now(), getSensorValue()))
-                },
-                onEnd = {
-                    /* no op*/
-                }
+                null
             )
         }
     }

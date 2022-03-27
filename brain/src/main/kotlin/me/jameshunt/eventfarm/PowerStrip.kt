@@ -101,16 +101,22 @@ class PowerStrip(
         }
     }
 
-    class OnOffOutput(private val config: Config) : Output {
+    class OnOffOutput(private val config: Config) : Output, Scheduler.Schedulable {
         data class Config(val name: String, val id: UUID, val ip: String, val index: Int)
 
         override val id: UUID = config.id
-        override fun run(value: TypedValue): TypedValue {
-            val on = (value as? TypedValue.Bool)?.value ?: throw IllegalArgumentException("expected Bool")
-            val output = setState(on)
 
-            // return success?
-            return TypedValue.Bool(true)
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+            // TODO: handle disposable
+            onSchedule.subscribe({
+                val requestedState = (it.data as? TypedValue.Bool)?.value
+                    ?: throw IllegalArgumentException("expected Bool")
+
+                when {
+                    it.isStarting -> setState(requestedState)
+                    it.isEnding -> setState(!requestedState)
+                }
+            }, { throw it })
         }
 
         private fun setState(on: Boolean) {

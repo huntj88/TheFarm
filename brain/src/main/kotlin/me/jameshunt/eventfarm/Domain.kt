@@ -5,6 +5,7 @@ import java.time.Instant
 import java.util.*
 
 sealed class TypedValue {
+    object None : TypedValue()
     data class Celsius(val value: Float) : TypedValue()
     data class Percent(val value: Float) : TypedValue() {
         init {
@@ -28,7 +29,6 @@ interface Input {
 
 interface Output {
     val id: UUID
-    fun run(value: TypedValue): TypedValue
 }
 
 // functions get access to DI tree?
