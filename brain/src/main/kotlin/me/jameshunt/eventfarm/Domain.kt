@@ -19,23 +19,35 @@ sealed class TypedValue {
     data class Bool(val value: Boolean) : TypedValue()
 }
 
-interface Input {
+interface Configurable {
+    // data that will be serialized to preserve settings
+    interface Config {
+        val id: UUID
+    }
+    val config: Config
+}
+
+interface Input : Configurable {
     data class InputEvent(val inputId: UUID, val time: Instant, val value: TypedValue)
 
-    val id: UUID
     fun getInputEvents(): Observable<InputEvent>
 }
 
-interface Output: Scheduler.Schedulable {
-    override val id: UUID
-}
+interface Output : Scheduler.Schedulable, Configurable
+
+interface Controller: Configurable
 
 // functions get access to DI tree?
 //interface Function {
 //
 //}
 
+// TODO: I think the device abstraction is useless. some inputs wouldn't even have a device like VPD
+// TODO: serialize everything as a flat list with deviceId being a nullable field (used when looked at it grouped in ui, or deleting)
+// TODO: but i don't really need a device at the code level
 interface Device {
     val inputs: List<Input>
     val outputs: List<Output>
+
+//    fun getSerializable(): List<FarmSerializable>
 }

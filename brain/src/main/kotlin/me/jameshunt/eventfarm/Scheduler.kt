@@ -48,7 +48,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
         }
     }
 
-    // TODO: what if i drop self schedulable, and instead made device its own controller,
+    // TODO: what if i drop SelfSchedulable, and instead made device its own controller,
     // TODO: or even control multiple devices that maybe need an exclusive lock on a resource
     // (like ec and ph probes on the water reservoir)
     fun addSelfSchedulable(schedulable: SelfSchedulable) {
@@ -64,6 +64,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     // example: two commands several seconds apart. (first turns on, second turns on, first turns off, second turns off)
     // this is bad because it should probably be something more like (first turns on, second turns off), and drop the middle states
 
+    // TODO: Or instead of doing the above todo: log warnings to review
     private val scheduleStream = PublishSubject.create<ScheduleItem>()
     fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {

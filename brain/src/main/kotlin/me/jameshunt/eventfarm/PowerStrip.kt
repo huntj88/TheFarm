@@ -44,16 +44,16 @@ fun createPowerStrip(): Device {
     return PowerStrip(
         totalWattInput = PowerStrip.WattInput(
             PowerStrip.WattInput.Config(
-                "Total watts being used for all devices",
                 "00000000-0000-0000-0000-000000000003".let { UUID.fromString(it) },
+                "Total watts being used for all devices",
                 ip,
                 null
             )
         ),
         totalWattHourInput = PowerStrip.WattHourInput(
             PowerStrip.WattHourInput.Config(
-                "total watt hours used for all devices",
                 "00000000-0000-0000-0000-000000000004".let { UUID.fromString(it) },
+                "total watt hours used for all devices",
                 ip,
                 null
             )
@@ -78,10 +78,10 @@ class PowerStrip(
         listOf(totalWattInput, totalWattHourInput) + channels.flatMap { listOf(it.wattInput, it.wattHourInput) }
     override val outputs: List<Output> = channels.map { it.onOffOutput }
 
-    class WattInput(private val config: Config) : Input {
-        data class Config(val name: String, val id: UUID, val ip: String, val index: Int?)
+    class WattInput(override val config: Config) : Input {
+        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int?): Configurable.Config
 
-        override val id: UUID = config.id
+        private val id: UUID = config.id
         override fun getInputEvents(): Observable<Input.InputEvent> {
             // TODO("Not yet implemented")
             val event = Input.InputEvent(id, Instant.now(), TypedValue.Watt(0f))
@@ -89,10 +89,10 @@ class PowerStrip(
         }
     }
 
-    class WattHourInput(private val config: Config) : Input {
-        data class Config(val name: String, val id: UUID, val ip: String, val index: Int?)
+    class WattHourInput(override val config: Config) : Input {
+        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int?): Configurable.Config
 
-        override val id: UUID = config.id
+        private val id: UUID = config.id
         override fun getInputEvents(): Observable<Input.InputEvent> {
             // TODO("Not yet implemented")
             val event = Input.InputEvent(id, Instant.now(), TypedValue.WattHour(0f))
@@ -100,8 +100,8 @@ class PowerStrip(
         }
     }
 
-    class OnOffOutput(private val config: Config) : Output, Scheduler.Schedulable {
-        data class Config(val name: String, val id: UUID, val ip: String, val index: Int)
+    class OnOffOutput(override val config: Config) : Output, Scheduler.Schedulable {
+        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int): Configurable.Config
 
         override val id: UUID = config.id
 

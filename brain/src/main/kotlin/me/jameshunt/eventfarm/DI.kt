@@ -9,9 +9,7 @@ fun getVPDInput(getInputEventManager: () -> InputEventManager): Input {
     val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
     val tempInputId = "00000000-0000-0000-0000-000000000005".let { UUID.fromString(it) }
     val humidityInputId = "00000000-0000-0000-0000-000000000006".let { UUID.fromString(it) }
-    return VPDFunction(
-        VPDFunction.Config(vpdInputId, tempInputId, humidityInputId),
-        inputEventManager = { getInputEventManager() })
+    return VPDFunction(VPDFunction.Config(vpdInputId, tempInputId, humidityInputId), getInputEventManager)
 }
 
 class DI {
@@ -24,8 +22,8 @@ class DI {
     }
 
     // in dagger bind schedulable
-    val schedulable =
-        inputs.mapNotNull { it as? Scheduler.Schedulable } + outputs.mapNotNull { it as? Scheduler.Schedulable }
+    val schedulable: List<Scheduler.Schedulable> =
+        inputs.mapNotNull { it as? Scheduler.Schedulable } + outputs.mapNotNull { it }
 
     val scheduler: Scheduler = Scheduler(getSchedulable = { findId -> schedulable.first { it.id == findId } }).apply {
         schedulable.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { addSelfSchedulable(it) }

@@ -11,10 +11,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 // lambda might be a Provider<InputEventManager> in dagger
-class VPDFunction(private val config: Config, private val inputEventManager: () -> InputEventManager) : Input {
-    data class Config(val id: UUID, val temperatureId: UUID, val humidityId: UUID)
-
-    override val id: UUID = config.id
+class VPDFunction(override val config: Config, private val inputEventManager: () -> InputEventManager) : Input {
+    data class Config(override val id: UUID, val temperatureId: UUID, val humidityId: UUID) : Configurable.Config
 
     // takes the event stream, grabs measurements it needs and spits out a new measurement calculated from other input
     // normal input might just be on a timer grabbing sensor data
@@ -23,13 +21,14 @@ class VPDFunction(private val config: Config, private val inputEventManager: () 
         val h = inputEventManager().getEventStream().filter { it.inputId == config.humidityId }
 
         return Observable.combineLatest(t, h) { temp, humidity ->
-            Input.InputEvent(id, Instant.now(), calcVPD(temp.value, humidity.value))
+            Input.InputEvent(config.id, Instant.now(), calcVPD(temp.value, humidity.value))
         }.debounce(100, TimeUnit.MILLISECONDS)
     }
 
     private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {
         val tempValue = (temp as? TypedValue.Celsius)?.value ?: throw IllegalArgumentException("expected celsius")
-        val humidityValue = (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
+        val humidityValue =
+            (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
 
         // TODO: correct math
         return TypedValue.Pascal(950f)
@@ -39,8 +38,8 @@ class VPDFunction(private val config: Config, private val inputEventManager: () 
 fun createAtlasScientficiEzoHum(): Device {
     val temperatureId = "00000000-0000-0000-0000-000000000005".let { UUID.fromString(it) }
     val humidityId = "00000000-0000-0000-0000-000000000006".let { UUID.fromString(it) }
-    val tempInput = TemperatureInput(TemperatureInput.Config("temp", temperatureId))
-    val humidityInput = HumidityInput(HumidityInput.Config("temp", humidityId))
+    val tempInput = TemperatureInput(TemperatureInput.Config(temperatureId, "temp"))
+    val humidityInput = HumidityInput(HumidityInput.Config(humidityId, "temp"))
     return AtlasScientificEzoHum(tempInput, humidityInput)
 }
 
@@ -48,8 +47,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
     override val inputs: List<Input> = listOf(temperatureInput, humidityInput)
     override val outputs: List<Output> = emptyList()
 
-    class TemperatureInput(config: Config) : Input, Scheduler.SelfSchedulable {
-        data class Config(val name: String, val id: UUID)
+    class TemperatureInput(override val config: Config) : Input, Scheduler.SelfSchedulable {
+        data class Config(override val id: UUID, val name: String) : Configurable.Config
 
         override val id: UUID = config.id
         private val inputEventStream = PublishSubject.create<Input.InputEvent>()
@@ -91,8 +90,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         }
     }
 
-    class HumidityInput(config: Config) : Input, Scheduler.SelfSchedulable {
-        data class Config(val name: String, val id: UUID)
+    class HumidityInput(override val config: Config) : Input, Scheduler.SelfSchedulable {
+        data class Config(override val id: UUID, val name: String) : Configurable.Config
 
         override val id: UUID = config.id
         private val inputEventStream = PublishSubject.create<Input.InputEvent>()

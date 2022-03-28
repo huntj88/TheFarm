@@ -7,23 +7,26 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 fun getVPDController(scheduler: Scheduler, inputEventManager: InputEventManager): VPDController {
+    val id = "00000000-0000-0000-0001-000000000000".let { UUID.fromString(it) }
     val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
     val humidifierOutputId = "00000000-0000-0000-0000-000000000152".let { UUID.fromString(it) }
 //    return VPDPIDController(scheduler, inputEventManager, vpdInputId, humidifierOutputId)
-    return VPDController(scheduler, inputEventManager, vpdInputId, humidifierOutputId)
+    val config = VPDController.Config(id, vpdInputId, humidifierOutputId)
+    return VPDController(config, scheduler, inputEventManager)
 }
 
 // super basic vpd controller
 class VPDController(
+    override val config: Config,
     private val scheduler: Scheduler,
-    private val inputEventManager: InputEventManager,
-    private val vpdInputId: UUID,
-    private val humidifierOutputId: UUID
-) {
+    private val inputEventManager: InputEventManager
+): Controller {
+    data class Config(override val id: UUID, val vpdInputId: UUID, val humidifierOutputId: UUID): `Configurable.Config`
+
     fun handle(): Disposable {
         return inputEventManager
             .getEventStream()
-            .filter { it.inputId == vpdInputId }
+            .filter { it.inputId == config.vpdInputId }
             .throttleLatest(10, TimeUnit.SECONDS)
             .filter {
                 val vpd = it.value as TypedValue.Pascal
@@ -35,7 +38,7 @@ class VPDController(
                 val endTime = startTime.plusSeconds(7)
                 scheduler.schedule(
                     Scheduler.ScheduleItem(
-                        humidifierOutputId,
+                        config.humidifierOutputId,
                         TypedValue.Bool(true),
                         startTime,
                         endTime
