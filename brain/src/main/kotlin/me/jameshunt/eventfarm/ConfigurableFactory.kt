@@ -36,18 +36,15 @@ val listOfJson = listOf(
 
 class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
 
+    // at some point i might have to add a migration step if I rename configurable class names or locations
+
     private val moshi = Moshi.Builder()
         .add(object {
             @FromJson
-            fun fromJson(json: String): UUID {
-                return UUID.fromString(json)
-            }
+            fun fromJson(json: String): UUID = UUID.fromString(json)
 
             @ToJson
-            fun toJson(uuid: UUID): String {
-                return uuid.toString()
-            }
-
+            fun toJson(uuid: UUID): String = uuid.toString()
         }).add(KotlinJsonAdapterFactory()).build()
 
     fun serialize(configurable: Configurable): String {
@@ -64,7 +61,7 @@ class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
         val data = moshi.adapter(Hack::class.java).fromJson(json)
         val className = data?.className ?: throw IllegalArgumentException()
         val typedAdapter = moshi.adapter<Configurable.Config>(Class.forName(className))
-        val config = typedAdapter.fromJson(json)!!
+        val config = typedAdapter.fromJson(json) ?: throw IllegalStateException()
 
         val configurable = config::class.java.enclosingClass
         check(Configurable::class.java.isAssignableFrom(configurable))

@@ -7,19 +7,14 @@ fun main() {
 }
 
 class DI {
-    val inputEventManager: InputEventManager = InputEventManager()
+    private val configurable = mutableListOf<Configurable>()
 
-    val configurable = mutableListOf<Configurable>()
-
-    // TODO make this not copy every time...
-    val schedulable: List<Scheduler.Schedulable>
-        get() = configurable.mapNotNull { it as? Scheduler.Schedulable }
-
-    val scheduler: Scheduler = Scheduler(getSchedulable = { findId ->
-        schedulable.first { it.id == findId }
+    private val inputEventManager: InputEventManager = InputEventManager()
+    private val scheduler: Scheduler = Scheduler(getSchedulable = { findId ->
+        configurable.schedulable().first { it.id == findId }
     })
 
-    val configurableFactory = ConfigurableFactory(
+    private val configurableFactory = ConfigurableFactory(
         injectableComponents = mapOf(
             IInputEventManager::class.java.name to inputEventManager,
             Scheduler::class.java.name to scheduler,
@@ -29,7 +24,12 @@ class DI {
     init {
         listOfJson.forEach { configurable.add(configurableFactory.deserialize(it)) }
         configurable.mapNotNull { it as? Input }.forEach { inputEventManager.addInput(it) }
-        schedulable.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { scheduler.addSelfSchedulable(it) }
+        configurable.schedulable().mapNotNull { it as? Scheduler.SelfSchedulable }
+            .forEach { scheduler.addSelfSchedulable(it) }
+    }
+
+    private fun List<Configurable>.schedulable(): List<Scheduler.Schedulable> {
+        return this.mapNotNull { it as? Scheduler.Schedulable }
     }
 }
 

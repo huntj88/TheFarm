@@ -38,11 +38,6 @@ interface Output : Scheduler.Schedulable, Configurable
 
 interface Controller: Configurable
 
-// functions get access to DI tree?
-//interface Function {
-//
-//}
-
 // TODO: I think the device abstraction is useless. some inputs wouldn't even have a device like VPD
 // TODO: serialize everything as a flat list with deviceId being a nullable field (used when looked at it grouped in ui, or deleting)
 // TODO: but i don't really need a device at the code level
