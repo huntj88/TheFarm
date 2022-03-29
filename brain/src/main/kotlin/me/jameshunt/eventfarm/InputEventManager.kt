@@ -17,3 +17,10 @@ class InputEventManager : IInputEventManager {
 
     override fun getEventStream(): Observable<Input.InputEvent> = eventStream
 }
+
+//class InputEventLogger(inputEventManager: InputEventManager) {
+//    init {
+//        // TODO: log somewhere
+//        inputEventManager.getEventStream().subscribe({ println(it) }, { throw it })
+//    }
+//}

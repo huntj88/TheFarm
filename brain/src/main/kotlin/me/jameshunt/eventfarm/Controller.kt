@@ -11,7 +11,7 @@ fun getVPDController(scheduler: Scheduler, inputEventManager: InputEventManager)
     val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
     val humidifierOutputId = "00000000-0000-0000-0000-000000000152".let { UUID.fromString(it) }
 //    return VPDPIDController(scheduler, inputEventManager, vpdInputId, humidifierOutputId)
-    val config = VPDController.Config(id, vpdInputId, humidifierOutputId)
+    val config = VPDController.Config(id, vpdInputId = vpdInputId, humidifierOutputId = humidifierOutputId)
     return VPDController(config, scheduler, inputEventManager)
 }
 
@@ -20,8 +20,13 @@ class VPDController(
     override val config: Config,
     private val scheduler: Scheduler,
     private val inputEventManager: InputEventManager
-): Controller {
-    data class Config(override val id: UUID, val vpdInputId: UUID, val humidifierOutputId: UUID): `Configurable.Config`
+) : Controller {
+    data class Config(
+        override val id: UUID,
+        override val className: String = Config::class.java.name,
+        val vpdInputId: UUID,
+        val humidifierOutputId: UUID
+    ) : Configurable.Config
 
     fun handle(): Disposable {
         return inputEventManager
@@ -32,7 +37,7 @@ class VPDController(
                 val vpd = it.value as TypedValue.Pascal
                 vpd.value > 925
             }
-            .subscribe ({
+            .subscribe({
                 println("handling")
                 val startTime = Instant.now()
                 val endTime = startTime.plusSeconds(7)
@@ -44,7 +49,7 @@ class VPDController(
                         endTime
                     )
                 )
-            }, {throw it})
+            }, { throw it })
     }
 }
 

@@ -5,20 +5,26 @@ import io.reactivex.rxjava3.disposables.Disposable
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-fun getVPDInput(getInputEventManager: () -> InputEventManager): Input {
+fun getVPDInput(inputEventManager: InputEventManager): Input {
     val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
     val tempInputId = "00000000-0000-0000-0000-000000000005".let { UUID.fromString(it) }
     val humidityInputId = "00000000-0000-0000-0000-000000000006".let { UUID.fromString(it) }
-    return VPDFunction(VPDFunction.Config(vpdInputId, tempInputId, humidityInputId), getInputEventManager)
+    return VPDFunction(
+        VPDFunction.Config(vpdInputId, temperatureId = tempInputId, humidityId = humidityInputId),
+        inputEventManager
+    )
 }
 
 class DI {
     val compositeDisposable = CompositeDisposable()
+    val inputEventManager: InputEventManager = InputEventManager()
+
     val devices = listOf(createPowerStrip(), createAtlasScientficiEzoHum())
-    val inputs: List<Input> = devices.flatMap { it.inputs } + listOf(getVPDInput { inputEventManager })
+    val inputs: List<Input> = devices.flatMap { it.inputs } + listOf(getVPDInput(inputEventManager))
     val outputs: List<Output> = devices.flatMap { it.outputs }
-    val inputEventManager: InputEventManager = InputEventManager().apply {
-        inputs.forEach { addInput(it) }
+
+    init {
+        inputs.forEach { inputEventManager.addInput(it) }
     }
 
     // in dagger bind schedulable

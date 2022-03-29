@@ -23,6 +23,7 @@ interface Configurable {
     // data that will be serialized to preserve settings
     interface Config {
         val id: UUID
+        val className: String
     }
     val config: Config
 }

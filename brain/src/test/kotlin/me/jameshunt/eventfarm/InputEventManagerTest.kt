@@ -15,7 +15,7 @@ internal class InputEventManagerTest {
         iem.getEventStream().doOnNext { println(it) }.subscribe(testObserver)
 
         inputs.forEach { iem.addInput(it) }
-        iem.addInput(getVPDInput { iem })
+        iem.addInput(getVPDInput(iem))
 
         val sch = Scheduler({output}).apply {
             inputs.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { addSelfSchedulable(it) }

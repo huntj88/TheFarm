@@ -45,6 +45,7 @@ fun createPowerStrip(): Device {
         totalWattInput = PowerStrip.WattInput(
             PowerStrip.WattInput.Config(
                 "00000000-0000-0000-0000-000000000003".let { UUID.fromString(it) },
+                PowerStrip.WattInput.Config::class.java.name,
                 "Total watts being used for all devices",
                 ip,
                 null
@@ -53,6 +54,7 @@ fun createPowerStrip(): Device {
         totalWattHourInput = PowerStrip.WattHourInput(
             PowerStrip.WattHourInput.Config(
                 "00000000-0000-0000-0000-000000000004".let { UUID.fromString(it) },
+                PowerStrip.WattHourInput.Config::class.java.name,
                 "total watt hours used for all devices",
                 ip,
                 null
@@ -79,7 +81,13 @@ class PowerStrip(
     override val outputs: List<Output> = channels.map { it.onOffOutput }
 
     class WattInput(override val config: Config) : Input {
-        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int?): Configurable.Config
+        data class Config(
+            override val id: UUID,
+            override val className: String = Config::class.java.name,
+            val name: String,
+            val ip: String,
+            val index: Int?
+        ) : Configurable.Config
 
         private val id: UUID = config.id
         override fun getInputEvents(): Observable<Input.InputEvent> {
@@ -90,7 +98,13 @@ class PowerStrip(
     }
 
     class WattHourInput(override val config: Config) : Input {
-        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int?): Configurable.Config
+        data class Config(
+            override val id: UUID,
+            override val className: String = Config::class.java.name,
+            val name: String,
+            val ip: String,
+            val index: Int?
+        ) : Configurable.Config
 
         private val id: UUID = config.id
         override fun getInputEvents(): Observable<Input.InputEvent> {
@@ -101,7 +115,13 @@ class PowerStrip(
     }
 
     class OnOffOutput(override val config: Config) : Output, Scheduler.Schedulable {
-        data class Config(override val id: UUID, val name: String, val ip: String, val index: Int): Configurable.Config
+        data class Config(
+            override val id: UUID,
+            override val className: String = Config::class.java.name,
+            val name: String,
+            val ip: String,
+            val index: Int
+        ) : Configurable.Config
 
         override val id: UUID = config.id
 
@@ -122,7 +142,7 @@ class PowerStrip(
 
         private fun setState(on: Boolean) {
             println("set state: $on")
-        // TODO()
+            // TODO()
         }
     }
 }
