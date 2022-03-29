@@ -19,7 +19,7 @@ fun getVPDController(scheduler: Scheduler, inputEventManager: InputEventManager)
 class VPDController(
     override val config: Config,
     private val scheduler: Scheduler,
-    private val inputEventManager: InputEventManager
+    private val inputEventManager: IInputEventManager
 ) : Controller {
     data class Config(
         override val id: UUID,

@@ -10,7 +10,7 @@ internal class ConfigurableFactoryTest {
         (di.inputs + di.outputs + di.vpdController).forEach {
             val configSerializer = ConfigurableFactory(
                 injectableComponents = mapOf(
-                    InputEventManager::class.java.name to di.inputEventManager,
+                    IInputEventManager::class.java.name to di.inputEventManager,
                     Scheduler::class.java.name to di.scheduler,
                 )
             )

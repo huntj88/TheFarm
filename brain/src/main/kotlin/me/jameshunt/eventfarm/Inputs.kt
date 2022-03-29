@@ -11,7 +11,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 // lambda might be a Provider<InputEventManager> in dagger
-class VPDFunction(override val config: Config, private val inputEventManager: InputEventManager) : Input {
+class VPDFunction(override val config: Config, private val inputEventManager: IInputEventManager) : Input {
     data class Config(
         override val id: UUID,
         override val className: String = Config::class.java.name,
