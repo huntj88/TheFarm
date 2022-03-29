@@ -30,7 +30,7 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
     }
 
     private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {
-        val tempValue = (temp as? TypedValue.Celsius)?.value ?: throw IllegalArgumentException("expected celsius")
+        val tempValue = (temp as? TypedValue.Temperature)?.asCelsius()?.value ?: throw IllegalArgumentException("expected temperature")
         val humidityValue =
             (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
 
@@ -64,7 +64,7 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
         override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
 
         private fun getSensorValue(): TypedValue {
-            return TypedValue.Celsius(20f)
+            return TypedValue.Temperature.Celsius(20f)
         }
 
         private var disposable: Disposable? = null

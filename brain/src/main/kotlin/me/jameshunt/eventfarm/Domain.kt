@@ -6,13 +6,31 @@ import java.util.*
 
 sealed class TypedValue {
     object None : TypedValue()
-    data class Celsius(val value: Float) : TypedValue()
+    sealed class Temperature: TypedValue() {
+        data class Celsius(val value: Float) : Temperature()
+        data class Kelvin(val value: Float) : Temperature()
+
+        fun asCelsius(): Celsius = when (this) {
+            is Celsius -> this
+            is Kelvin -> TODO()
+        }
+
+        fun asKelvin(): Kelvin = when (this) {
+            is Celsius -> TODO()
+            is Kelvin -> this
+        }
+    }
     data class Percent(val value: Float) : TypedValue() {
         init {
             check(value in 0f..1f)
         }
     }
 
+    sealed class Pressure {
+        data class Pascal(val value: Float) : Pressure()
+        data class PSI(val value: Float) : Pressure()
+        data class Bar(val value: Float): Pressure()
+    }
     data class Pascal(val value: Float) : TypedValue()
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()

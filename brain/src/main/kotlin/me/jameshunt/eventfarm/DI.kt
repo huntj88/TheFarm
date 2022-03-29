@@ -7,10 +7,10 @@ fun main() {
 }
 
 class DI {
-    private val configurable = mutableListOf<Configurable>()
+    val configurable = mutableListOf<Configurable>()
 
-    private val inputEventManager: InputEventManager = InputEventManager()
-    private val scheduler: Scheduler = Scheduler(getSchedulable = { findId ->
+    val inputEventManager: InputEventManager = InputEventManager()
+    val scheduler: Scheduler = Scheduler(getSchedulable = { findId ->
         configurable.schedulable().first { it.id == findId }
     })
 
@@ -24,8 +24,7 @@ class DI {
     init {
         listOfJson.forEach { configurable.add(configurableFactory.deserialize(it)) }
         configurable.mapNotNull { it as? Input }.forEach { inputEventManager.addInput(it) }
-        configurable.schedulable().mapNotNull { it as? Scheduler.SelfSchedulable }
-            .forEach { scheduler.addSelfSchedulable(it) }
+        configurable.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { scheduler.addSelfSchedulable(it) }
     }
 
     private fun List<Configurable>.schedulable(): List<Scheduler.Schedulable> {

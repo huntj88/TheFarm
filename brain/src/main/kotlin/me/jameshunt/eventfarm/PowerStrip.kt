@@ -5,6 +5,34 @@ import io.reactivex.rxjava3.disposables.Disposable
 import java.time.Instant
 import java.util.*
 
+// TODO: played around with new approach to devices. Just a reference for all the individual inputs and output of a device
+//data class HS300(
+//    val id: UUID,
+//    val totalWattInputId: UUID,
+//    val totalWattHourInputId: UUID,
+//
+//    val index0WattInputId: UUID,
+//    val index1WattInputId: UUID,
+//    val index2WattInputId: UUID,
+//    val index3WattInputId: UUID,
+//    val index4WattInputId: UUID,
+//    val index5WattInputId: UUID,
+//
+//    val index0WattHourInputId: UUID,
+//    val index1WattHourInputId: UUID,
+//    val index2WattHourInputId: UUID,
+//    val index3WattHourInputId: UUID,
+//    val index4WattHourInputId: UUID,
+//    val index5WattHourInputId: UUID,
+//
+//    val index0OnOffOutputId: UUID,
+//    val index1OnOffOutputId: UUID,
+//    val index2OnOffOutputId: UUID,
+//    val index3OnOffOutputId: UUID,
+//    val index4OnOffOutputId: UUID,
+//    val index5OnOffOutputId: UUID,
+//)
+
 class PowerStrip(
     totalWattInput: WattInput,
     totalWattHourInput: WattHourInput,
