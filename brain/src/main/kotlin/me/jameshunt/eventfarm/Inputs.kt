@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-// lambda might be a Provider<InputEventManager> in dagger
 class VPDFunction(override val config: Config, private val inputEventManager: IInputEventManager) : Input {
     data class Config(
         override val id: UUID,

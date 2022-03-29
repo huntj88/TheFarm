@@ -28,6 +28,11 @@ class VPDController(
         val humidifierOutputId: UUID
     ) : Configurable.Config
 
+    init {
+        // TODO
+        handle()
+    }
+
     fun handle(): Disposable {
         return inputEventManager
             .getEventStream()

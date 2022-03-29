@@ -39,6 +39,11 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     private val waiting: LinkedList<ScheduleWrapper> = LinkedList()
     private val running: LinkedList<ScheduleWrapper> = LinkedList()
 
+    init {
+        // todo: disposable? or future?
+        loop()
+    }
+
     fun schedule(item: ScheduleItem) {
         synchronized(this) {
             val schedulable = getSchedulable(item.id)
@@ -73,7 +78,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
-//            println(starting)
+            println(starting)
             starting.forEach { scheduleStream.onNext(it.scheduleItem) }
 
             val withoutEnd = starting.filter { it.scheduleItem.endTime == null }
