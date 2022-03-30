@@ -1,5 +1,6 @@
 package me.jameshunt.eventfarm
 
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -20,7 +21,7 @@ class VPDController(
     override val config: Config,
     private val scheduler: Scheduler,
     private val inputEventManager: IInputEventManager
-) : Controller {
+) : Configurable, Scheduler.Schedulable {
     data class Config(
         override val id: UUID,
         override val className: String = Config::class.java.name,
@@ -28,12 +29,19 @@ class VPDController(
         val humidifierOutputId: UUID
     ) : Configurable.Config
 
-    init {
-        // TODO
-        handle()
+    override val id: UUID = config.id
+
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+        onSchedule.switchMap {
+            when {
+                it.isStarting -> handle()
+                it.isEnding -> Observable.empty()
+                else -> Observable.error(IllegalStateException("Should not be possible"))
+            }
+        }.subscribe({}, { throw it })
     }
 
-    fun handle(): Disposable {
+    private fun handle(): Observable<Input.InputEvent> {
         return inputEventManager
             .getEventStream()
             .filter { it.inputId == config.vpdInputId }
@@ -42,7 +50,7 @@ class VPDController(
                 val vpd = it.value as TypedValue.Pascal
                 vpd.value > 925
             }
-            .subscribe({
+            .doOnNext {
                 println("handling")
                 val startTime = Instant.now()
                 val endTime = startTime.plusSeconds(7)
@@ -54,7 +62,7 @@ class VPDController(
                         endTime
                     )
                 )
-            }, { throw it })
+            }
     }
 }
 
