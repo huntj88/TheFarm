@@ -2,6 +2,7 @@ package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.observers.TestObserver
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.util.*
 
 internal class InputEventManagerTest {
@@ -17,12 +18,23 @@ internal class InputEventManagerTest {
         inputs.forEach { iem.addInput(it) }
         iem.addInput(getVPDInput(iem))
 
-        val sch = Scheduler({output}).apply {
-            inputs.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { addSelfSchedulable(it) }
-            loop()
-        }
-
-        val blah = getVPDController(sch, iem).handle()
+//        val vpdController = getVPDController(sch, iem)
+//        val vpdControllerId = vpdController.id
+//
+//        val sch = Scheduler {
+//            when (it) {
+//                vpdControllerId -> vpdController
+//                output.id -> output
+//                else -> throw IllegalArgumentException()
+//            }
+//        }.apply {
+//            inputs.mapNotNull { it as? Scheduler.SelfSchedulable }.forEach { addSelfSchedulable(it) }
+//            loop()
+//        }
+//
+//        val endTime = null // Instant.now().plusSeconds(20) // can have the controller run for a limited amount of time
+//        val controllerSchedule = Scheduler.ScheduleItem(vpdControllerId, TypedValue.None, Instant.now(), endTime)
+//        sch.schedule(controllerSchedule)
 
 //        sch.loop()
         testObserver.await()

@@ -1,7 +1,6 @@
 package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
@@ -45,10 +44,10 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     }
 
     fun schedule(item: ScheduleItem) {
-        synchronized(this) {
-            val schedulable = getSchedulable(item.id)
-            val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
-            schedulable.listenForSchedule(scheduleForId)
+        val schedulable = getSchedulable(item.id)
+        val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
+        schedulable.listenForSchedule(scheduleForId)
+        synchronized(waiting) {
             waiting.add(ScheduleWrapper(schedulable, item))
         }
     }
@@ -57,9 +56,9 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     // TODO: or even control multiple devices that maybe need an exclusive lock on a resource
     // (like ec and ph probes on the water reservoir)
     fun addSelfSchedulable(schedulable: SelfSchedulable) {
-        synchronized(this) {
-            val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
-            schedulable.listenForSchedule(scheduleForId)
+        val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
+        schedulable.listenForSchedule(scheduleForId)
+        synchronized(waiting) {
             waiting.add(ScheduleWrapper(schedulable, schedulable.scheduleNext(null)))
         }
     }
@@ -73,15 +72,12 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     private val scheduleStream = PublishSubject.create<ScheduleItem>()
     fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {
-            val waiting = waiting
-            val running = running
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
             println(starting)
             starting.forEach { scheduleStream.onNext(it.scheduleItem) }
 
-            val withoutEnd = starting.filter { it.scheduleItem.endTime == null }
             val endable = starting.filter { it.scheduleItem.endTime != null }
             running.addAll(endable)
             running.sortBy { it.scheduleItem.endTime!! }
@@ -89,7 +85,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             running.removeAll(ending)
             ending.forEach { scheduleStream.onNext(it.scheduleItem) }
 
-            val newScheduleItems = (withoutEnd + ending).mapNotNull {
+            val newScheduleItems = starting.mapNotNull {
                 if (it.schedulable !is SelfSchedulable) return@mapNotNull null
                 it.schedulable to it.scheduleItem
             }.map { (schedulable, scheduleItem) ->
