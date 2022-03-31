@@ -6,7 +6,6 @@ import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.eventfarm.AtlasScientificEzoHum.HumidityInput
 import me.jameshunt.eventfarm.AtlasScientificEzoHum.TemperatureInput
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -67,11 +66,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             return TypedValue.Temperature.Celsius(20f)
         }
 
-        private var disposable: Disposable? = null
-        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            if (disposable.hasInitialized()) return
-
-            disposable = onSchedule.subscribe(
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe(
                 {
                     if (it.isStarting) {
                         inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
@@ -97,11 +93,8 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             return TypedValue.Percent(0.5f)
         }
 
-        private var disposable: Disposable? = null
-        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            if (disposable.hasInitialized()) return
-
-            disposable = onSchedule.subscribe(
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe(
                 {
                     if (it.isStarting) {
                         inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))

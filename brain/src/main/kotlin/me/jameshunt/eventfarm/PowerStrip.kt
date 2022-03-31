@@ -92,11 +92,8 @@ class PowerStrip(
             val index: Int
         ) : Configurable.Config
 
-        private var disposable: Disposable? = null
-        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-            if (disposable.hasInitialized()) return
-
-            disposable = onSchedule.subscribe({
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe({
                 val requestedState = (it.data as? TypedValue.Bool)?.value
                     ?: throw IllegalArgumentException("expected Bool")
 

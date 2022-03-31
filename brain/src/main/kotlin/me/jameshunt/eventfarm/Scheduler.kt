@@ -1,6 +1,7 @@
 package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
@@ -21,8 +22,8 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             get() = endTime != null && Instant.now() >= endTime
     }
 
-    interface Schedulable: Configurable {
-        fun listenForSchedule(onSchedule: Observable<ScheduleItem>)
+    interface Schedulable : Configurable {
+        fun listenForSchedule(onSchedule: Observable<ScheduleItem>): Disposable
     }
 
     private data class ScheduleWrapper(
@@ -33,6 +34,9 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     private val waiting: LinkedList<ScheduleWrapper> = LinkedList()
     private val running: LinkedList<ScheduleWrapper> = LinkedList()
 
+    private val scheduleStream = PublishSubject.create<ScheduleItem>()
+    private val streamListeners = mutableMapOf<UUID, Disposable>()
+
     init {
         // todo: disposable? or future?
         loop()
@@ -40,8 +44,11 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
 
     fun schedule(item: ScheduleItem) {
         val schedulable = getSchedulable(item.id)
-        val scheduleForId = scheduleStream.filter { it.id == schedulable.config.id }.subscribeOn(Schedulers.io())
-        schedulable.listenForSchedule(scheduleForId)
+
+        val disposable = streamListeners[item.id]
+        if (disposable == null || disposable.isDisposed) {
+            streamListeners[item.id] = schedulable.listenForSchedule(scheduleStreamFor(schedulable.config.id))
+        }
         synchronized(waiting) {
             waiting.add(ScheduleWrapper(schedulable, item))
         }
@@ -53,7 +60,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     // this is bad because it should probably be something more like (first turns on, second turns off), and drop the middle states
 
     // TODO: Or instead of doing the above todo: log warnings to review
-    private val scheduleStream = PublishSubject.create<ScheduleItem>()
+
     private fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {
             val now = Instant.now()
@@ -78,4 +85,8 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
 //        { throw IllegalStateException("should not ever complete") },
 //        { throw it }
 //    )
+
+    private fun scheduleStreamFor(id: UUID): Observable<ScheduleItem> {
+        return scheduleStream.filter { it.id == id }.subscribeOn(Schedulers.io())
+    }
 }

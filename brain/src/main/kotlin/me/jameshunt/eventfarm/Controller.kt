@@ -18,9 +18,8 @@ class AtlasScientificEzoHumController(
         val temperatureInputId: UUID
     ) : Configurable.Config
 
-    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-        // TODO: disposable
-        onSchedule.switchMap {
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+        return onSchedule.switchMap {
             when {
                 it.isStarting -> handle()
                 it.isEnding -> Observable.empty()
@@ -55,9 +54,8 @@ class ECPHExclusiveLockController(
         val phInputId: UUID
     ) : Configurable.Config
 
-    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-        // TODO: disposable
-        onSchedule.switchMap {
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+        return onSchedule.switchMap {
             when {
                 it.isStarting -> handle()
                 it.isEnding -> Observable.empty()
@@ -94,9 +92,8 @@ class VPDController(
         val humidifierOutputId: UUID
     ) : Configurable.Config
 
-    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
-        // TODO: disposable
-        onSchedule.switchMap {
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+        return onSchedule.switchMap {
             when {
                 it.isStarting -> handle()
                 it.isEnding -> Observable.empty()
