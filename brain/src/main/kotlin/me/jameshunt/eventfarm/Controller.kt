@@ -6,6 +6,44 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+/**
+ * two [PeriodicController] could mimic the [AtlasScientificEzoHumController], but not the [ECPHExclusiveLockController]
+ **/
+
+// TODO: HS300 could come with a prebuilt controller since there are so many configurables, and maybe you can
+//   disable it, and use a different controllers if different behavior was required
+
+class PeriodicController(
+    override val config: Config,
+    private val scheduler: Scheduler
+) : Configurable, Scheduler.Schedulable {
+    data class Config(
+        override val id: UUID,
+        override val className: String,
+        val schedulableId: UUID,
+        val periodMillis: Long,
+        val durationMillis: Long?
+    ) : Configurable.Config
+
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+        return onSchedule.switchMap {
+            when {
+                it.isStarting -> handle()
+                it.isEnding -> Observable.empty()
+                else -> Observable.error(IllegalStateException("Should not be possible"))
+            }
+        }.subscribe({}, { throw it })
+    }
+
+    private fun handle(): Observable<Long> {
+        return Observable.interval(0, config.periodMillis, TimeUnit.MILLISECONDS).doOnNext { _ ->
+            val now = Instant.now()
+            val end = config.durationMillis?.let { now.plusMillis(it) }
+            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, TypedValue.None, now, end))
+        }
+    }
+}
+
 class AtlasScientificEzoHumController(
     override val config: Config,
     private val scheduler: Scheduler
