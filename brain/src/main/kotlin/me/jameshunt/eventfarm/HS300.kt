@@ -33,7 +33,8 @@ import java.util.*
 //    val index5OnOffOutputId: UUID,
 //)
 
-class PowerStrip(
+// device wrapper class is unused, but groups the related configurables
+class HS300(
     totalWattInput: WattInput,
     totalWattHourInput: WattHourInput,
     channels: List<Channel>

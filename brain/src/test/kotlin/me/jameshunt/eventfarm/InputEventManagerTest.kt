@@ -50,18 +50,18 @@ internal class InputEventManagerTest {
         // for now just hardcode the known settings
         val ip = "192.168.1.82"
 
-        fun createChannel(index: Int): PowerStrip.Channel {
-            return PowerStrip.Channel(
-                wattInput = PowerStrip.WattInput(
-                    PowerStrip.WattInput.Config(
+        fun createChannel(index: Int): HS300.Channel {
+            return HS300.Channel(
+                wattInput = HS300.WattInput(
+                    HS300.WattInput.Config(
                         name = "Total watts being used for all devices",
                         id = "00000000-0000-0000-0000-0000000001${index}0".let { UUID.fromString(it) },
                         ip = ip,
                         index = index
                     )
                 ),
-                wattHourInput = PowerStrip.WattHourInput(
-                    PowerStrip.WattHourInput.Config(
+                wattHourInput = HS300.WattHourInput(
+                    HS300.WattHourInput.Config(
                         name = "total watt hours used for all devices",
                         id = "00000000-0000-0000-0000-0000000001${index}1".let { UUID.fromString(it) },
                         ip = ip,
@@ -69,13 +69,13 @@ internal class InputEventManagerTest {
                     )
                 ),
                 onOffOutput = let {
-                    val config = PowerStrip.OnOffOutput.Config(
+                    val config = HS300.OnOffOutput.Config(
                         name = "turn plug on or off at position: $index",
                         id = "00000000-0000-0000-0000-0000000001${index}2".let { UUID.fromString(it) },
                         ip = ip,
                         index = index
                     )
-                    PowerStrip.OnOffOutput(
+                    HS300.OnOffOutput(
                         config,
                         Logger(config)
                     )
@@ -83,20 +83,20 @@ internal class InputEventManagerTest {
             )
         }
 
-        return PowerStrip(
-            totalWattInput = PowerStrip.WattInput(
-                PowerStrip.WattInput.Config(
+        return HS300(
+            totalWattInput = HS300.WattInput(
+                HS300.WattInput.Config(
                     "00000000-0000-0000-0000-000000000003".let { UUID.fromString(it) },
-                    PowerStrip.WattInput.Config::class.java.name,
+                    HS300.WattInput.Config::class.java.name,
                     "Total watts being used for all devices",
                     ip,
                     null
                 )
             ),
-            totalWattHourInput = PowerStrip.WattHourInput(
-                PowerStrip.WattHourInput.Config(
+            totalWattHourInput = HS300.WattHourInput(
+                HS300.WattHourInput.Config(
                     "00000000-0000-0000-0000-000000000004".let { UUID.fromString(it) },
-                    PowerStrip.WattHourInput.Config::class.java.name,
+                    HS300.WattHourInput.Config::class.java.name,
                     "total watt hours used for all devices",
                     ip,
                     null

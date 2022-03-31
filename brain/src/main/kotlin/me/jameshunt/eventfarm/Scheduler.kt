@@ -2,6 +2,7 @@ package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.kotlin.toCompletable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
@@ -38,8 +39,13 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     private val streamListeners = mutableMapOf<UUID, Disposable>()
 
     init {
-        // todo: disposable? or future?
         loop()
+            .toCompletable()
+            .subscribeOn(Schedulers.io())
+            .subscribe(
+                { throw IllegalStateException("should never complete") },
+                { throw it }
+            )
     }
 
     fun schedule(item: ScheduleItem) {
@@ -61,7 +67,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
 
     // TODO: Or instead of doing the above todo: log warnings to review
 
-    private fun loop() = Executors.newSingleThreadExecutor().execute {
+    private fun loop() = Executors.newSingleThreadExecutor().submit {
         while (true) {
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
