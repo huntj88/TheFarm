@@ -21,13 +21,8 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             get() = endTime != null && Instant.now() >= endTime
     }
 
-    interface Schedulable {
-        val id: UUID
+    interface Schedulable: Configurable {
         fun listenForSchedule(onSchedule: Observable<ScheduleItem>)
-    }
-
-    interface SelfSchedulable : Schedulable {
-        fun scheduleNext(previousCompleted: ScheduleItem?): ScheduleItem
     }
 
     private data class ScheduleWrapper(
@@ -45,21 +40,10 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
 
     fun schedule(item: ScheduleItem) {
         val schedulable = getSchedulable(item.id)
-        val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
+        val scheduleForId = scheduleStream.filter { it.id == schedulable.config.id }.subscribeOn(Schedulers.io())
         schedulable.listenForSchedule(scheduleForId)
         synchronized(waiting) {
             waiting.add(ScheduleWrapper(schedulable, item))
-        }
-    }
-
-    // TODO: what if i drop SelfSchedulable, and instead made device its own controller,
-    // TODO: or even control multiple devices that maybe need an exclusive lock on a resource
-    // (like ec and ph probes on the water reservoir)
-    fun addSelfSchedulable(schedulable: SelfSchedulable) {
-        val scheduleForId = scheduleStream.filter { it.id == schedulable.id }.subscribeOn(Schedulers.io())
-        schedulable.listenForSchedule(scheduleForId)
-        synchronized(waiting) {
-            waiting.add(ScheduleWrapper(schedulable, schedulable.scheduleNext(null)))
         }
     }
 
@@ -70,7 +54,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
 
     // TODO: Or instead of doing the above todo: log warnings to review
     private val scheduleStream = PublishSubject.create<ScheduleItem>()
-    fun loop() = Executors.newSingleThreadExecutor().execute {
+    private fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {
             val now = Instant.now()
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
@@ -84,14 +68,6 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
             running.removeAll(ending)
             ending.forEach { scheduleStream.onNext(it.scheduleItem) }
-
-            val newScheduleItems = starting.mapNotNull {
-                if (it.schedulable !is SelfSchedulable) return@mapNotNull null
-                it.schedulable to it.scheduleItem
-            }.map { (schedulable, scheduleItem) ->
-                ScheduleWrapper(schedulable, schedulable.scheduleNext(previousCompleted = scheduleItem))
-            }
-            waiting.addAll(newScheduleItems)
             waiting.sortBy { it.scheduleItem.startTime }
 
             Thread.sleep(1000) // TODO: much faster loop time

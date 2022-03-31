@@ -83,7 +83,7 @@ class PowerStrip(
         }
     }
 
-    class OnOffOutput(override val config: Config) : Output, Scheduler.Schedulable {
+    class OnOffOutput(override val config: Config, private val logger: Logger) : Output, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
@@ -91,8 +91,6 @@ class PowerStrip(
             val ip: String,
             val index: Int
         ) : Configurable.Config
-
-        override val id: UUID = config.id
 
         private var disposable: Disposable? = null
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
@@ -110,6 +108,7 @@ class PowerStrip(
         }
 
         private fun setState(on: Boolean) {
+            logger.d("set state: $on")
             println("set state: $on")
             // TODO()
         }

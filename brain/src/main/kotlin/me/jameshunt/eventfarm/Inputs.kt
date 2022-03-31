@@ -30,7 +30,8 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
     }
 
     private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {
-        val tempValue = (temp as? TypedValue.Temperature)?.asCelsius()?.value ?: throw IllegalArgumentException("expected temperature")
+        val tempValue = (temp as? TypedValue.Temperature)?.asCelsius()?.value
+            ?: throw IllegalArgumentException("expected temperature")
         val humidityValue =
             (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
 
@@ -51,14 +52,13 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
     override val inputs: List<Input> = listOf(temperatureInput, humidityInput)
     override val outputs: List<Output> = emptyList()
 
-    class TemperatureInput(override val config: Config) : Input, Scheduler.SelfSchedulable {
+    class TemperatureInput(override val config: Config) : Input, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
             val name: String
         ) : Configurable.Config
 
-        override val id: UUID = config.id
         private val inputEventStream = PublishSubject.create<Input.InputEvent>()
 
         override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
@@ -74,38 +74,21 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             disposable = onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), getSensorValue()))
+                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }
             )
         }
-
-        override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fiveSecondsAfterLast = previousCompleted?.startTime?.plus(5, ChronoUnit.SECONDS)
-            val now = Instant.now()
-            val startTime = if (fiveSecondsAfterLast?.isBefore(now) == true) {
-                now
-            } else {
-                fiveSecondsAfterLast ?: now
-            }
-            return Scheduler.ScheduleItem(
-                id,
-                TypedValue.None,
-                startTime,
-                null
-            )
-        }
     }
 
-    class HumidityInput(override val config: Config) : Input, Scheduler.SelfSchedulable {
+    class HumidityInput(override val config: Config) : Input, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
             val name: String
         ) : Configurable.Config
 
-        override val id: UUID = config.id
         private val inputEventStream = PublishSubject.create<Input.InputEvent>()
 
         override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
@@ -121,27 +104,10 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             disposable = onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(id, Instant.now(), getSensorValue()))
+                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }
-            )
-        }
-
-        override fun scheduleNext(previousCompleted: Scheduler.ScheduleItem?): Scheduler.ScheduleItem {
-            val fifteenSecondsAfterLast = previousCompleted?.startTime?.plus(15, ChronoUnit.SECONDS)
-            val now = Instant.now()
-            val startTime = if (fifteenSecondsAfterLast?.isBefore(now) == true) {
-                now
-            } else {
-                fifteenSecondsAfterLast ?: now
-            }
-
-            return Scheduler.ScheduleItem(
-                id,
-                TypedValue.None,
-                startTime,
-                null
             )
         }
     }

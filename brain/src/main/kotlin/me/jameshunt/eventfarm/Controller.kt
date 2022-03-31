@@ -7,13 +7,78 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-fun getVPDController(scheduler: Scheduler, inputEventManager: InputEventManager): VPDController {
-    val id = "00000000-0000-0000-0001-000000000000".let { UUID.fromString(it) }
-    val vpdInputId = "00000000-0000-0000-0000-000000000007".let { UUID.fromString(it) }
-    val humidifierOutputId = "00000000-0000-0000-0000-000000000152".let { UUID.fromString(it) }
-//    return VPDPIDController(scheduler, inputEventManager, vpdInputId, humidifierOutputId)
-    val config = VPDController.Config(id, vpdInputId = vpdInputId, humidifierOutputId = humidifierOutputId)
-    return VPDController(config, scheduler, inputEventManager)
+class AtlasScientificEzoHumController(
+    override val config: Config,
+    private val scheduler: Scheduler
+) : Configurable, Scheduler.Schedulable {
+    data class Config(
+        override val id: UUID,
+        override val className: String,
+        val humidityInputId: UUID,
+        val temperatureInputId: UUID
+    ) : Configurable.Config
+
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+        // TODO: disposable
+        onSchedule.switchMap {
+            when {
+                it.isStarting -> handle()
+                it.isEnding -> Observable.empty()
+                else -> Observable.error(IllegalStateException("Should not be possible"))
+            }
+        }.subscribe({}, { throw it })
+    }
+
+    private fun handle(): Observable<Long> {
+        return Observable.interval(0, 15, TimeUnit.SECONDS).doOnNext { _ ->
+
+            val now = Instant.now()
+            val ecScheduleItem = Scheduler.ScheduleItem(config.humidityInputId, TypedValue.None, now, null)
+            val phScheduleItem = Scheduler.ScheduleItem(config.temperatureInputId, TypedValue.None, now, null)
+
+            scheduler.schedule(ecScheduleItem)
+            scheduler.schedule(phScheduleItem)
+        }
+    }
+}
+
+
+// TODO: using humidity and temp ids for ph and ec
+class ECPHExclusiveLockController(
+    override val config: Config,
+    private val scheduler: Scheduler
+) : Configurable, Scheduler.Schedulable {
+    data class Config(
+        override val id: UUID,
+        override val className: String,
+        val ecInputId: UUID,
+        val phInputId: UUID
+    ) : Configurable.Config
+
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+        // TODO: disposable
+        onSchedule.switchMap {
+            when {
+                it.isStarting -> handle()
+                it.isEnding -> Observable.empty()
+                else -> Observable.error(IllegalStateException("Should not be possible"))
+            }
+        }.subscribe({}, { throw it })
+    }
+
+    private fun handle(): Observable<Long> {
+        return Observable.interval(0, 60, TimeUnit.SECONDS).doOnNext { _ ->
+            val now = Instant.now()
+            val switchTime = now.plusSeconds(30)
+            val endTime = switchTime.plusSeconds(30)
+
+            val ecScheduleItem = Scheduler.ScheduleItem(config.ecInputId, TypedValue.None, now, switchTime)
+            val phScheduleItem = Scheduler.ScheduleItem(config.phInputId, TypedValue.None, switchTime, endTime)
+
+            scheduler.schedule(ecScheduleItem)
+            scheduler.schedule(phScheduleItem)
+        }
+    }
 }
 
 // super basic vpd controller
@@ -29,9 +94,8 @@ class VPDController(
         val humidifierOutputId: UUID
     ) : Configurable.Config
 
-    override val id: UUID = config.id
-
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>) {
+        // TODO: disposable
         onSchedule.switchMap {
             when {
                 it.isStarting -> handle()

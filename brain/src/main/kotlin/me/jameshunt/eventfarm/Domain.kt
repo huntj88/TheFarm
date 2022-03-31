@@ -6,7 +6,7 @@ import java.util.*
 
 sealed class TypedValue {
     object None : TypedValue()
-    sealed class Temperature: TypedValue() {
+    sealed class Temperature : TypedValue() {
         data class Celsius(val value: Float) : Temperature()
         data class Kelvin(val value: Float) : Temperature()
 
@@ -20,6 +20,7 @@ sealed class TypedValue {
             is Kelvin -> this
         }
     }
+
     data class Percent(val value: Float) : TypedValue() {
         init {
             check(value in 0f..1f)
@@ -29,8 +30,10 @@ sealed class TypedValue {
     sealed class Pressure {
         data class Pascal(val value: Float) : Pressure()
         data class PSI(val value: Float) : Pressure()
-        data class Bar(val value: Float): Pressure()
+        data class Bar(val value: Float) : Pressure()
     }
+
+    @Deprecated("Pressure")
     data class Pascal(val value: Float) : TypedValue()
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
@@ -43,6 +46,7 @@ interface Configurable {
         val id: UUID
         val className: String
     }
+
     val config: Config
 }
 
@@ -63,3 +67,18 @@ interface Device {
 
 //    fun getSerializable(): List<FarmSerializable>
 }
+
+class Logger(private val config: Configurable.Config) {
+    private val maxStringLengthOfLevel = "DEBUG".length
+    fun d(message: String) {
+        val level = "DEBUG"
+        val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
+        val logMessage = "${Instant.now()}, ${levelRightAligned}, ${config.id}, ${config.className}, $message"
+        println(logMessage)
+    }
+}
+
+//inline fun <reified T: Configurable> ConfigurableLogger.log(instance: String = this::class.java.name,blah: String) {
+//
+//}
+

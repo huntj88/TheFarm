@@ -30,7 +30,9 @@ val listOfJson = listOf(
     """{"id":"00000000-0000-0000-0000-000000000132","className":"me.jameshunt.eventfarm.PowerStrip${'$'}OnOffOutput${'$'}Config","name":"turn plug on or off at position: 3","ip":"192.168.1.82","index":3}""",
     """{"id":"00000000-0000-0000-0000-000000000142","className":"me.jameshunt.eventfarm.PowerStrip${'$'}OnOffOutput${'$'}Config","name":"turn plug on or off at position: 4","ip":"192.168.1.82","index":4}""",
     """{"id":"00000000-0000-0000-0000-000000000152","className":"me.jameshunt.eventfarm.PowerStrip${'$'}OnOffOutput${'$'}Config","name":"turn plug on or off at position: 5","ip":"192.168.1.82","index":5}""",
-    """{"id":"00000000-0000-0000-0001-000000000000","className":"me.jameshunt.eventfarm.VPDController${'$'}Config","vpdInputId":"00000000-0000-0000-0000-000000000007","humidifierOutputId":"00000000-0000-0000-0000-000000000152"}"""
+    """{"id":"00000000-0000-0000-0001-000000000000","className":"me.jameshunt.eventfarm.VPDController${'$'}Config","vpdInputId":"00000000-0000-0000-0000-000000000007","humidifierOutputId":"00000000-0000-0000-0000-000000000152"}""",
+//    """{"id":"00000000-0000-0000-0002-000000000000","className":"me.jameshunt.eventfarm.ECPHExclusiveLockController${'$'}Config","ecInputId":"00000000-0000-0000-0000-000000000005","phInputId":"00000000-0000-0000-0000-000000000006"}""",
+    """{"id":"00000000-0000-0000-0002-000000000000","className":"me.jameshunt.eventfarm.AtlasScientificEzoHumController${'$'}Config","humidityInputId":"00000000-0000-0000-0000-000000000005","temperatureInputId":"00000000-0000-0000-0000-000000000006"}"""
 )
 
 
@@ -77,6 +79,11 @@ class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
         val args = constructor.parameters.map {
             if (it.type.isAssignableFrom(config::class.java)) {
                 return@map config
+            }
+
+            if (it.type == Logger::class.java) {
+                // TODO: could be a logger factory of something, if a Logger needs any more dependencies than a config
+                return@map Logger(config)
             }
 
             val canonicalName = it.type.canonicalName!!
