@@ -77,7 +77,7 @@ internal class InputEventManagerTest {
                     )
                     HS300.OnOffOutput(
                         config,
-                        Logger(config)
+                        LoggerFactory().create(config)
                     )
                 }
             )

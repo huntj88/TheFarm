@@ -9,7 +9,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
-class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
+class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
         val id: UUID,
         val data: TypedValue,
@@ -74,7 +74,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
             starting.forEach {
-                Logger(it.schedulable.config).trace("Starting: ${it.scheduleItem}")
+                loggerFactory.create(it.schedulable.config).trace("Starting: ${it.scheduleItem}")
                 scheduleStream.onNext(it.scheduleItem)
             }
 
@@ -84,7 +84,7 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
             val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
             running.removeAll(ending)
             ending.forEach {
-                Logger(it.schedulable.config).trace("Ending: ${it.scheduleItem}")
+                loggerFactory.create(it.schedulable.config).trace("Ending: ${it.scheduleItem}")
                 scheduleStream.onNext(it.scheduleItem)
             }
 

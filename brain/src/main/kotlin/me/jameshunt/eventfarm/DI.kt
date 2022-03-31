@@ -11,18 +11,13 @@ fun main() {
 object DI {
     val configurable = mutableListOf<Configurable>()
 
+    val loggerFactory = LoggerFactory()
     val inputEventManager: InputEventManager = InputEventManager()
-    val scheduler: Scheduler = Scheduler(getSchedulable = { findId ->
+    val scheduler: Scheduler = Scheduler(loggerFactory) { findId ->
         configurable.first { it.config.id == findId } as? Schedulable ?: throw IllegalStateException()
-    })
+    }
 
-
-    private val configurableFactory = ConfigurableFactory(
-        injectableComponents = mapOf(
-            IInputEventManager::class.java.name to inputEventManager,
-            Scheduler::class.java.name to scheduler,
-        )
-    )
+    private val configurableFactory = ConfigurableFactory(inputEventManager, scheduler, loggerFactory)
 
     init {
         listOfJson

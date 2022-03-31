@@ -66,13 +66,23 @@ interface Device {
     val outputs: List<Output>
 }
 
-class Logger(private val config: Configurable.Config) {
+interface Logger {
+    fun debug(message: String)
+    fun trace(message: String)
+}
+
+class LoggerFactory {
+    // TODO could add an loggingEnabled flag for each config somehow. if false return a noOp implementation
+    fun create(config: Configurable.Config): Logger = DefaultLogger(config)
+}
+
+class DefaultLogger(private val config: Configurable.Config): Logger {
     private val maxStringLengthOfLevel = "DEBUG".length
-    fun debug(message: String) {
+    override fun debug(message: String) {
         log("DEBUG", message)
     }
 
-    fun trace(message: String) {
+    override fun trace(message: String) {
         log("TRACE", message)
     }
 

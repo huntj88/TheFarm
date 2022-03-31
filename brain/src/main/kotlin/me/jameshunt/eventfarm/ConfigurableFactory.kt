@@ -36,7 +36,16 @@ val listOfJson = listOf(
 )
 
 
-class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
+class ConfigurableFactory(
+    inputEventManager: IInputEventManager,
+    scheduler: Scheduler,
+    private val loggerFactory: LoggerFactory
+) {
+
+    private val injectableComponents: Map<String, Any> = mapOf(
+        IInputEventManager::class.java.name to inputEventManager,
+        Scheduler::class.java.name to scheduler
+    )
 
     // at some point i might have to add a migration step if I rename configurable class names or locations
 
@@ -82,8 +91,7 @@ class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
             }
 
             if (it.type == Logger::class.java) {
-                // TODO: could be a logger factory of something, if a Logger needs any more dependencies than a config
-                return@map Logger(config)
+                return@map loggerFactory.create(config)
             }
 
             val canonicalName = it.type.canonicalName!!
