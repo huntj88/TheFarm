@@ -106,8 +106,7 @@ class HS300(
         }
 
         private fun setState(on: Boolean) {
-            logger.d("set state: $on")
-            println("set state: $on")
+            logger.debug("Set state: $on, plugIndex: ${config.index}")
             // TODO()
         }
     }

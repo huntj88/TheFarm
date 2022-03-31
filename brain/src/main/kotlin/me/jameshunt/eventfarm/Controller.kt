@@ -120,7 +120,8 @@ class ECPHExclusiveLockController(
 class VPDController(
     override val config: Config,
     private val scheduler: Scheduler,
-    private val inputEventManager: IInputEventManager
+    private val inputEventManager: IInputEventManager,
+    private val logger: Logger
 ) : Configurable, Scheduler.Schedulable {
     data class Config(
         override val id: UUID,
@@ -149,7 +150,7 @@ class VPDController(
                 vpd.value > 925
             }
             .doOnNext {
-                println("handling")
+                logger.debug("VPD too high, raising humidity")
                 val startTime = Instant.now()
                 val endTime = startTime.plusSeconds(7)
                 scheduler.schedule(

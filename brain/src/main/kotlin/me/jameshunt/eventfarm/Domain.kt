@@ -68,8 +68,15 @@ interface Device {
 
 class Logger(private val config: Configurable.Config) {
     private val maxStringLengthOfLevel = "DEBUG".length
-    fun d(message: String) {
-        val level = "DEBUG"
+    fun debug(message: String) {
+        log("DEBUG", message)
+    }
+
+    fun trace(message: String) {
+        log("TRACE", message)
+    }
+
+    private fun log(level: String, message: String) {
         val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
         val logMessage = "${Instant.now()}, ${levelRightAligned}, ${config.id}, ${config.className}, $message"
         println(logMessage)

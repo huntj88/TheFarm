@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 
 class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
-        val id: UUID, // id of thing that will be scheduled
+        val id: UUID,
         val data: TypedValue,
         val startTime: Instant,
         val endTime: Instant?
@@ -70,20 +70,25 @@ class Scheduler(private val getSchedulable: (UUID) -> Schedulable) {
     private fun loop() = Executors.newSingleThreadExecutor().submit {
         while (true) {
             val now = Instant.now()
+            waiting.sortBy { it.scheduleItem.startTime }
             val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
             waiting.removeAll(starting)
-            println(starting)
-            starting.forEach { scheduleStream.onNext(it.scheduleItem) }
+            starting.forEach {
+                Logger(it.schedulable.config).trace("Starting: ${it.scheduleItem}")
+                scheduleStream.onNext(it.scheduleItem)
+            }
 
-            val endable = starting.filter { it.scheduleItem.endTime != null }
-            running.addAll(endable)
+            val hasEnd = starting.filter { it.scheduleItem.endTime != null }
+            running.addAll(hasEnd)
             running.sortBy { it.scheduleItem.endTime!! }
             val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
             running.removeAll(ending)
-            ending.forEach { scheduleStream.onNext(it.scheduleItem) }
-            waiting.sortBy { it.scheduleItem.startTime }
+            ending.forEach {
+                Logger(it.schedulable.config).trace("Ending: ${it.scheduleItem}")
+                scheduleStream.onNext(it.scheduleItem)
+            }
 
-            Thread.sleep(1000) // TODO: much faster loop time
+            Thread.sleep(200) // TODO: much faster loop time
             // todo: check elapsed time to ensure scheduling thread is never blocked unless flag set or something for debugging
         }
     }
