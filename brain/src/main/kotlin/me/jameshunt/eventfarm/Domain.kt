@@ -64,8 +64,6 @@ interface Output : Scheduler.Schedulable, Configurable
 interface Device {
     val inputs: List<Input>
     val outputs: List<Output>
-
-//    fun getSerializable(): List<FarmSerializable>
 }
 
 class Logger(private val config: Configurable.Config) {
@@ -77,8 +75,3 @@ class Logger(private val config: Configurable.Config) {
         println(logMessage)
     }
 }
-
-//inline fun <reified T: Configurable> ConfigurableLogger.log(instance: String = this::class.java.name,blah: String) {
-//
-//}
-

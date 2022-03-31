@@ -6,7 +6,7 @@ internal class ConfigurableFactoryTest {
 
     @Test
     fun test() {
-        val di = DI()
+        val di = DI
         di.configurable.forEach {
             val configSerializer = ConfigurableFactory(
                 injectableComponents = mapOf(
@@ -14,7 +14,7 @@ internal class ConfigurableFactoryTest {
                     Scheduler::class.java.name to di.scheduler,
                 )
             )
-            configSerializer.serialize(it).also { configSerializer.deserialize(it) }
+            configSerializer.serialize(it).also { configSerializer.configurableFromJson(it) }
         }
     }
 
@@ -24,6 +24,6 @@ internal class ConfigurableFactoryTest {
         val configSerializer = ConfigurableFactory(
             injectableComponents = emptyMap()
         )
-        println(configSerializer.deserialize(config))
+        println(configSerializer.configurableFromJson(config))
     }
 }

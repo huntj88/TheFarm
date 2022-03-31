@@ -59,7 +59,7 @@ class ConfigurableFactory(private val injectableComponents: Map<String, Any>) {
     // used to deserialize any configurable.config with a concrete class
     private data class Hack(override val id: UUID, override val className: String) : Configurable.Config
 
-    fun deserialize(json: String): Configurable {
+    fun configurableFromJson(json: String): Configurable {
         // get information the interface gives us
         val data = moshi.adapter(Hack::class.java).fromJson(json)
         val className = data?.className ?: throw IllegalArgumentException()

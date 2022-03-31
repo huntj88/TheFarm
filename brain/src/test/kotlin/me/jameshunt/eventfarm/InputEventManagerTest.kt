@@ -2,7 +2,6 @@ package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.observers.TestObserver
 import org.junit.jupiter.api.Test
-import java.time.Instant
 import java.util.*
 
 internal class InputEventManagerTest {
@@ -11,7 +10,11 @@ internal class InputEventManagerTest {
     fun test() {
         val testObserver = TestObserver<Input.InputEvent>()
         val inputs = createAtlasScientficiEzoHum().inputs
-        val output = createPowerStrip().outputs.find { it.id == "00000000-0000-0000-0000-000000000152".let { UUID.fromString(it) } }!!
+        val output = createPowerStrip().outputs.find {
+            it.config.id == "00000000-0000-0000-0000-000000000152".let {
+                UUID.fromString(it)
+            }
+        }!!
         val iem = InputEventManager()
         iem.getEventStream().doOnNext { println(it) }.subscribe(testObserver)
 
@@ -65,14 +68,18 @@ internal class InputEventManagerTest {
                         index = index
                     )
                 ),
-                onOffOutput = PowerStrip.OnOffOutput(
-                    PowerStrip.OnOffOutput.Config(
+                onOffOutput = let {
+                    val config = PowerStrip.OnOffOutput.Config(
                         name = "turn plug on or off at position: $index",
                         id = "00000000-0000-0000-0000-0000000001${index}2".let { UUID.fromString(it) },
                         ip = ip,
                         index = index
                     )
-                )
+                    PowerStrip.OnOffOutput(
+                        config,
+                        Logger(config)
+                    )
+                }
             )
         }
 

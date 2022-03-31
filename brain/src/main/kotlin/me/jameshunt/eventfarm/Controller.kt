@@ -42,7 +42,7 @@ class AtlasScientificEzoHumController(
 }
 
 
-// TODO: using humidity and temp ids for ph and ec
+// TODO: using humidity and temp ids for ph and ec in json
 class ECPHExclusiveLockController(
     override val config: Config,
     private val scheduler: Scheduler
