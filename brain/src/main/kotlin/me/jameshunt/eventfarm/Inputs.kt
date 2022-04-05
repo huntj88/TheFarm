@@ -25,7 +25,7 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
 
         return Observable.combineLatest(t, h) { temp, humidity ->
             Input.InputEvent(config.id, Instant.now(), calcVPD(temp.value, humidity.value))
-        }.debounce(100, TimeUnit.MILLISECONDS)
+        }.throttleLatest(100, TimeUnit.MILLISECONDS)
     }
 
     private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {

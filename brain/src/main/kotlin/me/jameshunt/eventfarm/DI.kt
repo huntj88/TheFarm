@@ -47,6 +47,22 @@ object DI {
             endTime = null
         )
         scheduler.schedule(ezoHumControllerSchedule)
+
+        val hs300InputControllerSchedule = ScheduleItem(
+            id = configurable.first { it is HS300InputController }.config.id,
+            data = TypedValue.None,
+            startTime = Instant.now(),
+            endTime = null
+        )
+        scheduler.schedule(hs300InputControllerSchedule)
+
+        val myLightingControllerSchedule = ScheduleItem(
+            id = configurable.first { it is MyLightingController }.config.id,
+            data = TypedValue.None,
+            startTime = Instant.now(),
+            endTime = null
+        )
+        scheduler.schedule(myLightingControllerSchedule)
     }
 }
 

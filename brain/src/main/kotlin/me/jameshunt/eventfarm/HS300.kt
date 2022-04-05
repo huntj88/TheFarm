@@ -2,6 +2,7 @@ package me.jameshunt.eventfarm
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
 import java.util.*
 
@@ -24,6 +25,13 @@ import java.util.*
 //    val index3WattHourInputId: UUID,
 //    val index4WattHourInputId: UUID,
 //    val index5WattHourInputId: UUID,
+
+//    val index0OnOffInputId: UUID,
+//    val index1OnOffInputId: UUID,
+//    val index2OnOffInputId: UUID,
+//    val index3OnOffInputId: UUID,
+//    val index4OnOffInputId: UUID,
+//    val index5OnOffInputId: UUID,
 //
 //    val index0OnOffOutputId: UUID,
 //    val index1OnOffOutputId: UUID,
@@ -50,7 +58,7 @@ class HS300(
         listOf(totalWattInput, totalWattHourInput) + channels.flatMap { listOf(it.wattInput, it.wattHourInput) }
     override val outputs: List<Output> = channels.map { it.onOffOutput }
 
-    class WattInput(override val config: Config) : Input {
+    class WattInput(override val config: Config) : Input, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
@@ -59,15 +67,28 @@ class HS300(
             val index: Int?
         ) : Configurable.Config
 
-        private val id: UUID = config.id
-        override fun getInputEvents(): Observable<Input.InputEvent> {
-            // TODO("Not yet implemented")
-            val event = Input.InputEvent(id, Instant.now(), TypedValue.Watt(0f))
-            return Observable.just(event)
+        private val inputEventStream = PublishSubject.create<Input.InputEvent>()
+
+        override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
+
+        private fun getSensorValue(): TypedValue {
+            // TODO
+            return TypedValue.Watt(0f)
+        }
+
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe(
+                {
+                    if (it.isStarting) {
+                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
+                    }
+                },
+                { throw it }
+            )
         }
     }
 
-    class WattHourInput(override val config: Config) : Input {
+    class WattHourInput(override val config: Config) : Input, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
@@ -76,11 +97,54 @@ class HS300(
             val index: Int?
         ) : Configurable.Config
 
-        private val id: UUID = config.id
-        override fun getInputEvents(): Observable<Input.InputEvent> {
-            // TODO("Not yet implemented")
-            val event = Input.InputEvent(id, Instant.now(), TypedValue.WattHour(0f))
-            return Observable.just(event)
+        private val inputEventStream = PublishSubject.create<Input.InputEvent>()
+
+        override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
+
+        private fun getSensorValue(): TypedValue {
+            // TODO
+            return TypedValue.WattHour(0f)
+        }
+
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe(
+                {
+                    if (it.isStarting) {
+                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
+                    }
+                },
+                { throw it }
+            )
+        }
+    }
+
+    class OnOffInput(override val config: Config) : Input, Scheduler.Schedulable {
+        data class Config(
+            override val id: UUID,
+            override val className: String = Config::class.java.name,
+            val name: String,
+            val ip: String,
+            val index: Int
+        ) : Configurable.Config
+
+        private val inputEventStream = PublishSubject.create<Input.InputEvent>()
+
+        override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
+
+        private fun getSensorValue(): TypedValue {
+            // TODO
+            return TypedValue.Bool(false)
+        }
+
+        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+            return onSchedule.subscribe(
+                {
+                    if (it.isStarting) {
+                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
+                    }
+                },
+                { throw it }
+            )
         }
     }
 
