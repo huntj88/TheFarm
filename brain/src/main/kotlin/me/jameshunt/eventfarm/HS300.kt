@@ -103,12 +103,6 @@ class HS300 private constructor() {
                         config.id,
                         it.slot_id,
                         Instant.now(),
-                        TypedValue.Voltage(it.voltage_mv / 1000F)
-                    ),
-                    Input.InputEvent(
-                        config.id,
-                        it.slot_id,
-                        Instant.now(),
                         TypedValue.WattHour(it.total_wh.toFloat())
                     ),
                 )

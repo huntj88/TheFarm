@@ -33,7 +33,7 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
 
         // TODO: correct math
-        return TypedValue.Pascal(650f)
+        return TypedValue.Pressure.Pascal(650f)
     }
 }
 

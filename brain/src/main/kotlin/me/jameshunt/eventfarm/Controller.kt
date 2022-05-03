@@ -148,7 +148,7 @@ class VPDController(
             .filter { it.inputId == config.vpdInputId && it.index == config.humidifierOutputIndex }
             .throttleLatest(10, TimeUnit.SECONDS)
             .filter {
-                val vpd = it.value as TypedValue.Pascal
+                val vpd = it.value as TypedValue.Pressure.Pascal
                 vpd.value > 925
             }
             .doOnNext {
@@ -196,7 +196,7 @@ class MyLightingController(
 
     private fun handle(): Observable<Boolean> {
         return inputEventManager.getEventStream()
-            .filter { it.isOffStateForPlug() }
+            .filter { it.isOnOffStateForPlug() }
             .map { (it.value as TypedValue.Bool).value }
             .doOnNext { isOn ->
                 val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
@@ -214,7 +214,7 @@ class MyLightingController(
             }
     }
 
-    private fun Input.InputEvent.isOffStateForPlug(): Boolean {
+    private fun Input.InputEvent.isOnOffStateForPlug(): Boolean {
         return inputId == config.lightOnOffInputId
             && index == config.inputIndex
             && value is TypedValue.Bool

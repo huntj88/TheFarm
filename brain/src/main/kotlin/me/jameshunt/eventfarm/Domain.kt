@@ -27,17 +27,14 @@ sealed class TypedValue {
         }
     }
 
-    sealed class Pressure {
+    sealed class Pressure: TypedValue() {
         data class Pascal(val value: Float) : Pressure()
         data class PSI(val value: Float) : Pressure()
         data class Bar(val value: Float) : Pressure()
     }
 
-    @Deprecated("Pressure")
-    data class Pascal(val value: Float) : TypedValue()
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
-    data class Voltage(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
 }
 
