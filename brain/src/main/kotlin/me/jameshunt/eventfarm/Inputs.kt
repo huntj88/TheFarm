@@ -3,8 +3,6 @@ package me.jameshunt.eventfarm
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.subjects.PublishSubject
-import me.jameshunt.eventfarm.AtlasScientificEzoHum.HumidityInput
-import me.jameshunt.eventfarm.AtlasScientificEzoHum.TemperatureInput
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -24,7 +22,7 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
         val h = inputEventManager.getEventStream().filter { it.inputId == config.humidityId }
 
         return Observable.combineLatest(t, h) { temp, humidity ->
-            Input.InputEvent(config.id, Instant.now(), calcVPD(temp.value, humidity.value))
+            Input.InputEvent(config.id, null, Instant.now(), calcVPD(temp.value, humidity.value))
         }.throttleLatest(100, TimeUnit.MILLISECONDS)
     }
 
@@ -35,22 +33,12 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
 
         // TODO: correct math
-        return TypedValue.Pascal(950f)
+        return TypedValue.Pascal(650f)
     }
 }
 
-fun createAtlasScientficiEzoHum(): Device {
-    val temperatureId = "00000000-0000-0000-0000-000000000005".let { UUID.fromString(it) }
-    val humidityId = "00000000-0000-0000-0000-000000000006".let { UUID.fromString(it) }
-    val tempInput = TemperatureInput(TemperatureInput.Config(temperatureId, name = "temp"))
-    val humidityInput = HumidityInput(HumidityInput.Config(humidityId, name = "humidity"))
-    return AtlasScientificEzoHum(tempInput, humidityInput)
-}
-
-class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: HumidityInput) : Device {
-    override val inputs: List<Input> = listOf(temperatureInput, humidityInput)
-    override val outputs: List<Output> = emptyList()
-
+// TODO: consolidate like HS300.Inputs?
+class AtlasScientificEzoHum {
     class TemperatureInput(override val config: Config) : Input, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
@@ -70,7 +58,7 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             return onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
+                        inputEventStream.onNext(Input.InputEvent(config.id, null, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }
@@ -97,7 +85,7 @@ class AtlasScientificEzoHum(temperatureInput: TemperatureInput, humidityInput: H
             return onSchedule.subscribe(
                 {
                     if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(config.id, Instant.now(), getSensorValue()))
+                        inputEventStream.onNext(Input.InputEvent(config.id, null, Instant.now(), getSensorValue()))
                     }
                 },
                 { throw it }

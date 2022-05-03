@@ -40,7 +40,7 @@ class PeriodicController(
         return Observable.interval(0, config.periodMillis, TimeUnit.MILLISECONDS).doOnNext { _ ->
             val now = Instant.now()
             val end = config.durationMillis?.let { now.plusMillis(it) }
-            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, TypedValue.None, now, end))
+            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, null, TypedValue.None, now, end))
         }
     }
 }
@@ -70,8 +70,8 @@ class AtlasScientificEzoHumController(
         return Observable.interval(0, 15, TimeUnit.SECONDS).doOnNext { _ ->
 
             val now = Instant.now()
-            val ecScheduleItem = Scheduler.ScheduleItem(config.humidityInputId, TypedValue.None, now, null)
-            val phScheduleItem = Scheduler.ScheduleItem(config.temperatureInputId, TypedValue.None, now, null)
+            val ecScheduleItem = Scheduler.ScheduleItem(config.humidityInputId, null, TypedValue.None, now, null)
+            val phScheduleItem = Scheduler.ScheduleItem(config.temperatureInputId, null, TypedValue.None, now, null)
 
             scheduler.schedule(ecScheduleItem)
             scheduler.schedule(phScheduleItem)
@@ -108,8 +108,8 @@ class ECPHExclusiveLockController(
             val switchTime = now.plusSeconds(30)
             val endTime = switchTime.plusSeconds(30)
 
-            val ecScheduleItem = Scheduler.ScheduleItem(config.ecInputId, TypedValue.None, now, switchTime)
-            val phScheduleItem = Scheduler.ScheduleItem(config.phInputId, TypedValue.None, switchTime, endTime)
+            val ecScheduleItem = Scheduler.ScheduleItem(config.ecInputId, null, TypedValue.None, now, switchTime)
+            val phScheduleItem = Scheduler.ScheduleItem(config.phInputId, null, TypedValue.None, switchTime, endTime)
 
             scheduler.schedule(ecScheduleItem)
             scheduler.schedule(phScheduleItem)
@@ -128,7 +128,8 @@ class VPDController(
         override val id: UUID,
         override val className: String = Config::class.java.name,
         val vpdInputId: UUID,
-        val humidifierOutputId: UUID
+        val humidifierOutputId: UUID,
+        val humidifierOutputIndex: Int?
     ) : Configurable.Config
 
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
@@ -144,7 +145,7 @@ class VPDController(
     private fun handle(): Observable<Input.InputEvent> {
         return inputEventManager
             .getEventStream()
-            .filter { it.inputId == config.vpdInputId }
+            .filter { it.inputId == config.vpdInputId && it.index == config.humidifierOutputIndex }
             .throttleLatest(10, TimeUnit.SECONDS)
             .filter {
                 val vpd = it.value as TypedValue.Pascal
@@ -157,97 +158,13 @@ class VPDController(
                 scheduler.schedule(
                     Scheduler.ScheduleItem(
                         config.humidifierOutputId,
+                        null,
                         TypedValue.Bool(true),
                         startTime,
                         endTime
                     )
                 )
             }
-    }
-}
-
-class HS300InputController(override val config: Config, private val scheduler: Scheduler) : Scheduler.Schedulable {
-    data class Config(
-        override val id: UUID,
-        override val className: String,
-
-        val index0OnOffInputId: UUID,
-        val index1OnOffInputId: UUID,
-        val index2OnOffInputId: UUID,
-        val index3OnOffInputId: UUID,
-        val index4OnOffInputId: UUID,
-        val index5OnOffInputId: UUID,
-
-        val totalWattInputId: UUID,
-        val totalWattHourInputId: UUID,
-
-        val index0WattInputId: UUID,
-        val index1WattInputId: UUID,
-        val index2WattInputId: UUID,
-        val index3WattInputId: UUID,
-        val index4WattInputId: UUID,
-        val index5WattInputId: UUID,
-
-        val index0WattHourInputId: UUID,
-        val index1WattHourInputId: UUID,
-        val index2WattHourInputId: UUID,
-        val index3WattHourInputId: UUID,
-        val index4WattHourInputId: UUID,
-        val index5WattHourInputId: UUID
-    ) : Configurable.Config
-
-    private val inputIds = listOf(
-        config.index0OnOffInputId,
-        config.index1OnOffInputId,
-        config.index2OnOffInputId,
-        config.index3OnOffInputId,
-        config.index4OnOffInputId,
-        config.index5OnOffInputId,
-        config.totalWattInputId,
-        config.totalWattHourInputId,
-        config.index0WattInputId,
-        config.index1WattInputId,
-        config.index2WattInputId,
-        config.index3WattInputId,
-        config.index4WattInputId,
-        config.index5WattInputId,
-        config.index0WattHourInputId,
-        config.index1WattHourInputId,
-        config.index2WattHourInputId,
-        config.index3WattHourInputId,
-        config.index4WattHourInputId,
-        config.index5WattHourInputId
-    )
-
-    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
-        return onSchedule.switchMap {
-            when {
-                it.isStarting -> handle()
-                it.isEnding -> Observable.empty()
-                else -> Observable.error(IllegalStateException("Should not be possible"))
-            }
-        }.subscribe({}, { throw it })
-    }
-
-    private fun handle(): Observable<Long> {
-        val period = 100L
-        return Observable.interval(0, period, TimeUnit.SECONDS).doOnNext { _ ->
-            val now = Instant.now()
-
-            // space requests out evenly over the period
-            val timeBetweenRequests = period / inputIds.size
-
-            inputIds
-                .mapIndexed { i, inputId ->
-                    Scheduler.ScheduleItem(
-                        inputId,
-                        TypedValue.None,
-                        now.plusSeconds(i * timeBetweenRequests),
-                        null
-                    )
-                }
-                .forEach { scheduler.schedule(it) }
-        }
     }
 }
 
@@ -260,7 +177,9 @@ class MyLightingController(
         override val id: UUID,
         override val className: String,
         val lightOnOffInputId: UUID,
+        val inputIndex: Int?,
         val lightOnOffOutputId: UUID,
+        val outputIndex: Int?,
         val turnOnTime: LocalTime,
         val turnOffTime: LocalTime
     ) : Configurable.Config
@@ -277,14 +196,15 @@ class MyLightingController(
 
     private fun handle(): Observable<Boolean> {
         return inputEventManager.getEventStream()
-            .filter { it.inputId == config.lightOnOffInputId }
+            .filter { it.isOffStateForPlug() }
             .map { (it.value as TypedValue.Bool).value }
             .doOnNext { isOn ->
-                val shouldBeOn = LocalTime.now() >= config.turnOnTime || LocalTime.now() < config.turnOffTime
+                val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
                 if (isOn != shouldBeOn) {
                     scheduler.schedule(
                         Scheduler.ScheduleItem(
                             config.lightOnOffOutputId,
+                            config.outputIndex,
                             TypedValue.Bool(shouldBeOn),
                             Instant.now(),
                             null
@@ -292,5 +212,11 @@ class MyLightingController(
                     )
                 }
             }
+    }
+
+    private fun Input.InputEvent.isOffStateForPlug(): Boolean {
+        return inputId == config.lightOnOffInputId
+            && index == config.inputIndex
+            && value is TypedValue.Bool
     }
 }

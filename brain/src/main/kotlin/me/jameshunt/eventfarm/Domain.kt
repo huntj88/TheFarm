@@ -37,6 +37,7 @@ sealed class TypedValue {
     data class Pascal(val value: Float) : TypedValue()
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
+    data class Voltage(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
 }
 
@@ -51,7 +52,8 @@ interface Configurable {
 }
 
 interface Input : Configurable {
-    data class InputEvent(val inputId: UUID, val time: Instant, val value: TypedValue)
+    // if multiple input values an index is used
+    data class InputEvent(val inputId: UUID, val index: Int?, val time: Instant, val value: TypedValue)
 
     fun getInputEvents(): Observable<InputEvent>
 }
@@ -61,22 +63,24 @@ interface Output : Scheduler.Schedulable, Configurable
 // TODO: I think the device abstraction is useless. some inputs wouldn't even have a device like VPD
 // TODO: serialize everything as a flat list with deviceId being a nullable field (used when looked at it grouped in ui, or deleting)
 // TODO: but i don't really need a device at the code level
-interface Device {
-    val inputs: List<Input>
-    val outputs: List<Output>
-}
+//interface Device {
+//    val inputs: List<Input>
+//    val outputs: List<Output>
+//}
 
 interface Logger {
-    fun debug(message: String)
     fun trace(message: String)
+    fun debug(message: String)
+    fun error(message: String, throwable: Throwable?)
 }
 
 class LoggerFactory {
     // TODO could add an loggingEnabled flag for each config somehow. if false return a noOp implementation
-    fun create(config: Configurable.Config): Logger = DefaultLogger(config)
+    fun create(config: Configurable.Config): Logger = DefaultConfigLogger(config)
 }
 
-class DefaultLogger(private val config: Configurable.Config): Logger {
+// TODO: real logging lib?
+class DefaultConfigLogger(private val config: Configurable.Config): Logger {
     private val maxStringLengthOfLevel = "DEBUG".length
     override fun debug(message: String) {
         log("DEBUG", message)
@@ -86,9 +90,34 @@ class DefaultLogger(private val config: Configurable.Config): Logger {
         log("TRACE", message)
     }
 
+    override fun error(message: String, throwable: Throwable?) {
+        log("ERROR", "$message, error: ${throwable?.stackTraceToString()}")
+    }
+
     private fun log(level: String, message: String) {
         val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
         val logMessage = "${Instant.now()}, ${levelRightAligned}, ${config.id}, ${config.className}, $message"
+        println(logMessage)
+    }
+}
+
+class DefaultLogger(private val name: String): Logger {
+    private val maxStringLengthOfLevel = "DEBUG".length
+    override fun debug(message: String) {
+        log("DEBUG", message)
+    }
+
+    override fun trace(message: String) {
+        log("TRACE", message)
+    }
+
+    override fun error(message: String, throwable: Throwable?) {
+        log("ERROR", "$message, error: ${throwable?.stackTraceToString()}")
+    }
+
+    private fun log(level: String, message: String) {
+        val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
+        val logMessage = "${Instant.now()}, ${levelRightAligned}, $name, $message"
         println(logMessage)
     }
 }

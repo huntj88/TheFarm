@@ -12,9 +12,11 @@ import java.util.concurrent.Executors
 class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
         val id: UUID,
+        /** If a [Configurable] has multiple inputs or outputs, outputs, index refers to a specific input or output */
+        val index: Int?,
         val data: TypedValue,
         val startTime: Instant,
-        val endTime: Instant?
+        val endTime: Instant?,
     ) {
         val isStarting: Boolean
             get() = endTime == null || Instant.now() < endTime
