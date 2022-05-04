@@ -16,6 +16,7 @@ class DepthSensorInput(override val config: Config) : Input {
         override val id: UUID,
         override val className: String,
         val depthOfTankCentimeters: Int,
+        val depthWhenFullCentimeters: Int
     ) : Configurable.Config
 
     // linux sometimes doesn't recognize /dev/ttyAMCxx ports
@@ -35,8 +36,11 @@ class DepthSensorInput(override val config: Config) : Input {
         return distanceFromWaterCentimeters.flatMap { cm ->
             val time = Instant.now()
             val depthCmF = cm.toFloat()
-            val percentRemaining = depthCmF / config.depthOfTankCentimeters
-            listOf(
+            val depthCorrected = depthCmF - config.depthWhenFullCentimeters
+            val depthOfTankCorrected = config.depthOfTankCentimeters - config.depthWhenFullCentimeters
+            val missing = depthCorrected / depthOfTankCorrected
+            val percentRemaining = (1f - missing).coerceIn(0f, 1f)
+            Observable.just(
                 Input.InputEvent(
                     inputId = config.id,
                     index = null,
@@ -49,7 +53,7 @@ class DepthSensorInput(override val config: Config) : Input {
                     time = time,
                     value = TypedValue.Percent(percentRemaining)
                 )
-            ).toObservable()
+            )
         }
     }
 
@@ -77,7 +81,6 @@ class DepthSensorInput(override val config: Config) : Input {
             // hasNextLine is a blocking call
             while (scanner.hasNextLine()) {
                 val distanceInCentimeters = scanner.nextLine().toInt()
-                println(distanceInCentimeters)
                 distanceFromWaterCentimeters.onNext(distanceInCentimeters)
             }
             scanner.close()
