@@ -1,22 +1,29 @@
-package me.jameshunt.eventfarm.controller
+package me.jameshunt.eventfarm.customcontroller
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import me.jameshunt.eventfarm.Configurable
-import me.jameshunt.eventfarm.Scheduler
-import me.jameshunt.eventfarm.TypedValue
+import me.jameshunt.eventfarm.*
+import me.jameshunt.eventfarm.core.Configurable
+import me.jameshunt.eventfarm.core.Scheduler
+import me.jameshunt.eventfarm.core.TypedValue
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-class AtlasScientificEzoHumController(
+/**
+ * two [PeriodicController] could mimic the [AtlasScientificEzoHumController], but not the [ECPHExclusiveLockController]
+ **/
+
+class PeriodicController(
     override val config: Config,
     private val scheduler: Scheduler
 ) : Configurable, Scheduler.Schedulable {
     data class Config(
         override val id: UUID,
         override val className: String,
-        val ezoHumInputId: UUID,
+        val schedulableId: UUID,
+        val periodMillis: Long,
+        val durationMillis: Long?
     ) : Configurable.Config
 
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
@@ -30,10 +37,10 @@ class AtlasScientificEzoHumController(
     }
 
     private fun handle(): Observable<Long> {
-        return Observable.interval(0, 15, TimeUnit.SECONDS).doOnNext { _ ->
+        return Observable.interval(0, config.periodMillis, TimeUnit.MILLISECONDS).doOnNext { _ ->
             val now = Instant.now()
-            val collectDataScheduleItem = Scheduler.ScheduleItem(config.ezoHumInputId, null, TypedValue.None, now, null)
-            scheduler.schedule(collectDataScheduleItem)
+            val end = config.durationMillis?.let { now.plusMillis(it) }
+            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, null, TypedValue.None, now, end))
         }
     }
 }

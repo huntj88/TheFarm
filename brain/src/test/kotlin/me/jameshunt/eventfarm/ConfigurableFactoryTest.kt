@@ -1,5 +1,7 @@
 package me.jameshunt.eventfarm
 
+import me.jameshunt.eventfarm.core.ConfigurableFactory
+import me.jameshunt.eventfarm.core.DI
 import org.junit.jupiter.api.Test
 
 internal class ConfigurableFactoryTest {

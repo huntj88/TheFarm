@@ -1,4 +1,4 @@
-package me.jameshunt.eventfarm
+package me.jameshunt.eventfarm.core
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable

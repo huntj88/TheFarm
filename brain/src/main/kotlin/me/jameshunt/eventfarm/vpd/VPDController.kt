@@ -1,8 +1,8 @@
-package me.jameshunt.eventfarm.controller
+package me.jameshunt.eventfarm.vpd
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import me.jameshunt.eventfarm.*
+import me.jameshunt.eventfarm.core.*
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit

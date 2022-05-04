@@ -1,14 +1,15 @@
-package me.jameshunt.eventfarm
+package me.jameshunt.eventfarm.core
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import me.jameshunt.eventfarm.Scheduler.Schedulable
-import me.jameshunt.eventfarm.Scheduler.ScheduleItem
-import me.jameshunt.eventfarm.controller.AtlasScientificEzoHumController
-import me.jameshunt.eventfarm.controller.MyLightingController
-import me.jameshunt.eventfarm.controller.VPDController
+import me.jameshunt.eventfarm.core.Scheduler.Schedulable
+import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
+import me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHumController
+import me.jameshunt.eventfarm.customcontroller.MyLightingController
+import me.jameshunt.eventfarm.vpd.VPDController
+import me.jameshunt.eventfarm.device.hs300.HS300Lib
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
@@ -53,7 +54,7 @@ object DI {
     private val configurableFactory = ConfigurableFactory(moshi, inputEventManager, scheduler, hS300Lib, loggerFactory)
 
     init {
-        listOfJson
+        configJson
             .map { configurableFactory.configurableFromJson(it) }
             .let { configurable.addAll(it) }
 

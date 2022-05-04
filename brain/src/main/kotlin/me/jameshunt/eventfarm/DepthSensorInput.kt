@@ -4,6 +4,9 @@ import gnu.io.CommPortIdentifier
 import gnu.io.SerialPort
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
+import me.jameshunt.eventfarm.core.Configurable
+import me.jameshunt.eventfarm.core.Input
+import me.jameshunt.eventfarm.core.TypedValue
 import java.io.InputStream
 import java.time.Instant
 import java.util.*

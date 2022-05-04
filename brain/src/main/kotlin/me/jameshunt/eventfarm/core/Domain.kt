@@ -1,4 +1,4 @@
-package me.jameshunt.eventfarm
+package me.jameshunt.eventfarm.core
 
 import io.reactivex.rxjava3.core.Observable
 import java.time.Instant
