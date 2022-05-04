@@ -6,6 +6,9 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.eventfarm.Scheduler.Schedulable
 import me.jameshunt.eventfarm.Scheduler.ScheduleItem
+import me.jameshunt.eventfarm.controller.AtlasScientificEzoHumController
+import me.jameshunt.eventfarm.controller.MyLightingController
+import me.jameshunt.eventfarm.controller.VPDController
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
