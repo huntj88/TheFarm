@@ -1,4 +1,4 @@
-package me.jameshunt.eventfarm
+package me.jameshunt.eventfarm.device
 
 import gnu.io.CommPortIdentifier
 import gnu.io.SerialPort
