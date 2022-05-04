@@ -61,14 +61,6 @@ interface Input : Configurable {
 
 interface Output : Scheduler.Schedulable, Configurable
 
-// TODO: I think the device abstraction is useless. some inputs wouldn't even have a device like VPD
-// TODO: serialize everything as a flat list with deviceId being a nullable field (used when looked at it grouped in ui, or deleting)
-// TODO: but i don't really need a device at the code level
-//interface Device {
-//    val inputs: List<Input>
-//    val outputs: List<Output>
-//}
-
 interface Logger {
     fun trace(message: String)
     fun debug(message: String)

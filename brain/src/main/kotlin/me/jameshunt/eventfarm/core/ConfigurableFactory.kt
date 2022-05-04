@@ -5,6 +5,7 @@ import me.jameshunt.eventfarm.device.hs300.HS300Lib
 import java.util.*
 
 // TODO: verify no duplicate when creating or reading?
+// TODO: create a map of id's to configurable names, so i can display it in logging?
 class ConfigurableFactory(
     private val moshi: Moshi,
     inputEventManager: IInputEventManager,

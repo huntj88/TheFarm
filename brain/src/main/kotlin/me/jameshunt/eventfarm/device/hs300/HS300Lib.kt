@@ -30,8 +30,7 @@ class HS300Lib(
     private val idPrefix = "8006D4C79A1D2CE0935A5A79B28D00291F06E0D10" // TODO parametrize?
     fun setState(ip: String, index: Int, on: Boolean) {
         val state = if (on) 1 else 0
-        val setState =
-            """{"context":{"child_ids":["${idPrefix + index.toString()}"]},"system":{"set_relay_state":{"state":$state}}}"""
+        val setState = """{"context":{"child_ids":["$idPrefix$index"]},"system":{"set_relay_state":{"state":$state}}}"""
 
         // TODO: uncomment
 //        setState.executeJsonCommand(ip)
@@ -41,7 +40,6 @@ class HS300Lib(
         val parsedData = """{"system":{"get_sysinfo":null}}"""
             .executeJsonCommand(ip)
             .substringAfter("Received:  ")
-//            .let { it.substring(it.indexOf("{")) }
             .also { println("response: $it") }
             .let { moshi.adapter(State::class.java).fromJson(it) }
             ?: throw IllegalStateException("could not parse energy meter json")
@@ -50,8 +48,7 @@ class HS300Lib(
     }
 
     fun getCurrentEnergyMeter(ip: String, index: Int): PlugEnergyMeter {
-        val getEnergyCommand =
-            """{"emeter":{"get_realtime":{}},"context":{"child_ids":["${idPrefix + index.toString()}"]}}"""
+        val getEnergyCommand = """{"emeter":{"get_realtime":{}},"context":{"child_ids":["$idPrefix$index"]}}"""
 
         val parsedData = getEnergyCommand
             .executeJsonCommand(ip)

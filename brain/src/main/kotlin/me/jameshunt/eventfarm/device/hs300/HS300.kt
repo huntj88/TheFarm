@@ -42,8 +42,6 @@ class HS300 private constructor() {
         }
     }
 
-    // TODO: make schedulable and use input data to trigger state or eMeter?
-    // TODO: could also split up inputs into separate state and emeter inputs?
     class Inputs(override val config: Config, private val hS300Lib: HS300Lib) : Input {
         data class Config(
             override val id: UUID,

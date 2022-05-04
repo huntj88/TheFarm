@@ -62,13 +62,6 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
         }
     }
 
-    // TODO: create lock on each thing to be schedule using its id
-    // TODO: lock is to prevent conflicting commands
-    // example: two commands several seconds apart. (first turns on, second turns on, first turns off, second turns off)
-    // this is bad because it should probably be something more like (first turns on, second turns off), and drop the middle states
-
-    // TODO: Or instead of doing the above todo: log warnings to review
-
     private fun loop() = Executors.newSingleThreadExecutor().submit {
         while (true) {
             val now = Instant.now()
