@@ -18,8 +18,10 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
     // takes the event stream, grabs measurements it needs and spits out a new measurement calculated from other input
     // normal input might just be on a timer grabbing sensor data
     override fun getInputEvents(): Observable<Input.InputEvent> {
-        val t = inputEventManager.getEventStream().filter { it.inputId == config.temperatureId }
-        val h = inputEventManager.getEventStream().filter { it.inputId == config.humidityId }
+        val t = inputEventManager.getEventStream()
+            .filter { it.inputId == config.temperatureId && it.value is TypedValue.Temperature }
+        val h = inputEventManager.getEventStream()
+            .filter { it.inputId == config.humidityId && it.value is TypedValue.Percent }
 
         return Observable.combineLatest(t, h) { temp, humidity ->
             Input.InputEvent(config.id, null, Instant.now(), calcVPD(temp.value, humidity.value))
@@ -37,59 +39,38 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
     }
 }
 
-// TODO: consolidate like HS300.Inputs?
-class AtlasScientificEzoHum {
-    class TemperatureInput(override val config: Config) : Input, Scheduler.Schedulable {
-        data class Config(
-            override val id: UUID,
-            override val className: String = Config::class.java.name,
-            val name: String
-        ) : Configurable.Config
+class AtlasScientificEzoHum(override val config: Config) : Input, Scheduler.Schedulable {
+    data class Config(
+        override val id: UUID,
+        override val className: String = Config::class.java.name,
+        val name: String
+    ) : Configurable.Config
 
-        private val inputEventStream = PublishSubject.create<Input.InputEvent>()
+    private val inputEventStream = PublishSubject.create<Input.InputEvent>()
 
-        override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
+    override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
 
-        private fun getSensorValue(): TypedValue {
-            return TypedValue.Temperature.Celsius(20f)
-        }
-
-        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
-            return onSchedule.subscribe(
-                {
-                    if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(config.id, null, Instant.now(), getSensorValue()))
-                    }
-                },
-                { throw it }
-            )
-        }
+    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
+        return onSchedule.subscribe(
+            {
+                if (it.isStarting) {
+                    val time = Instant.now()
+                    val (temperature, humidity) = getSensorData()
+                    inputEventStream.onNext(Input.InputEvent(config.id, null, time, temperature))
+                    inputEventStream.onNext(Input.InputEvent(config.id, null, time, humidity))
+                }
+            },
+            { throw it }
+        )
     }
 
-    class HumidityInput(override val config: Config) : Input, Scheduler.Schedulable {
-        data class Config(
-            override val id: UUID,
-            override val className: String = Config::class.java.name,
-            val name: String
-        ) : Configurable.Config
+    private data class EzoHumData(
+        val temperature: TypedValue.Temperature,
+        val humidity: TypedValue.Percent
+    )
 
-        private val inputEventStream = PublishSubject.create<Input.InputEvent>()
-
-        override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
-
-        private fun getSensorValue(): TypedValue {
-            return TypedValue.Percent(0.5f)
-        }
-
-        override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
-            return onSchedule.subscribe(
-                {
-                    if (it.isStarting) {
-                        inputEventStream.onNext(Input.InputEvent(config.id, null, Instant.now(), getSensorValue()))
-                    }
-                },
-                { throw it }
-            )
-        }
+    private fun getSensorData(): EzoHumData {
+        // TODO: get actual sensor data
+        return EzoHumData(temperature = TypedValue.Temperature.Celsius(20f), humidity = TypedValue.Percent(0.5f))
     }
 }

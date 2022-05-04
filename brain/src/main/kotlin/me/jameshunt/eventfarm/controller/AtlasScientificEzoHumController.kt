@@ -16,8 +16,7 @@ class AtlasScientificEzoHumController(
     data class Config(
         override val id: UUID,
         override val className: String,
-        val humidityInputId: UUID,
-        val temperatureInputId: UUID
+        val ezoHumInputId: UUID,
     ) : Configurable.Config
 
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
@@ -32,14 +31,9 @@ class AtlasScientificEzoHumController(
 
     private fun handle(): Observable<Long> {
         return Observable.interval(0, 15, TimeUnit.SECONDS).doOnNext { _ ->
-
             val now = Instant.now()
-            val humidityScheduleItem = Scheduler.ScheduleItem(config.humidityInputId, null, TypedValue.None, now, null)
-            val temperatureScheduleItem =
-                Scheduler.ScheduleItem(config.temperatureInputId, null, TypedValue.None, now, null)
-
-            scheduler.schedule(humidityScheduleItem)
-            scheduler.schedule(temperatureScheduleItem)
+            val collectDataScheduleItem = Scheduler.ScheduleItem(config.ezoHumInputId, null, TypedValue.None, now, null)
+            scheduler.schedule(collectDataScheduleItem)
         }
     }
 }

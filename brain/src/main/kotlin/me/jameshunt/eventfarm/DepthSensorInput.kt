@@ -3,7 +3,6 @@ package me.jameshunt.eventfarm
 import gnu.io.CommPortIdentifier
 import gnu.io.SerialPort
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.kotlin.toObservable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.io.InputStream
 import java.time.Instant
