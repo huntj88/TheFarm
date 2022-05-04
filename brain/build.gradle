@@ -32,6 +32,9 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect:1.5.31'
     implementation "com.squareup.moshi:moshi-kotlin:1.12.0"
 
+    // https://lukealderton.com/blog/posts/2016/javalangunsatisfiedlinkerror-no-rxtxserial-in-javalibrarypath/
+    implementation 'org.rxtx:rxtx:2.1.7'
+
     implementation "com.squareup.sqldelight:sqlite-driver:1.5.3"
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation "com.squareup.sqldelight:rxjava3-extensions:1.5.1"

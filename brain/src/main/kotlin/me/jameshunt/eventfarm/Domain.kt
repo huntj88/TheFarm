@@ -21,6 +21,10 @@ sealed class TypedValue {
         }
     }
 
+    sealed class Length: TypedValue() {
+        data class Centimeter(val value: Float): Length()
+    }
+
     data class Percent(val value: Float) : TypedValue() {
         init {
             check(value in 0f..1f)
