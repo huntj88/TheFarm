@@ -53,7 +53,7 @@ interface Configurable {
 }
 
 interface Input : Configurable {
-    // if multiple input values an index is used
+    // if input has multiple input values of the same type an index is used to differentiate
     data class InputEvent(val inputId: UUID, val index: Int?, val time: Instant, val value: TypedValue)
 
     fun getInputEvents(): Observable<InputEvent>

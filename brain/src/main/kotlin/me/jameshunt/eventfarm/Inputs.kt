@@ -18,12 +18,15 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
     // takes the event stream, grabs measurements it needs and spits out a new measurement calculated from other input
     // normal input might just be on a timer grabbing sensor data
     override fun getInputEvents(): Observable<Input.InputEvent> {
-        val t = inputEventManager.getEventStream()
-            .filter { it.inputId == config.temperatureId && it.value is TypedValue.Temperature }
-        val h = inputEventManager.getEventStream()
-            .filter { it.inputId == config.humidityId && it.value is TypedValue.Percent }
+        val tempStream = inputEventManager.getEventStream()
+            .filter { it.inputId == config.temperatureId }
+            .filter { it.value is TypedValue.Temperature }
 
-        return Observable.combineLatest(t, h) { temp, humidity ->
+        val humidityStream = inputEventManager.getEventStream()
+            .filter { it.inputId == config.humidityId }
+            .filter { it.value is TypedValue.Percent }
+
+        return Observable.combineLatest(tempStream, humidityStream) { temp, humidity ->
             Input.InputEvent(config.id, null, Instant.now(), calcVPD(temp.value, humidity.value))
         }.throttleLatest(100, TimeUnit.MILLISECONDS)
     }
