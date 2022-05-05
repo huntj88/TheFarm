@@ -5,7 +5,7 @@ import me.jameshunt.thefarm.exec
 import java.io.File
 
 class HS300Lib(
-    private val cliDirectory: File,
+    private val libDirectory: File,
     private val moshi: Moshi
 ) {
     data class State(val system: System)
@@ -40,7 +40,6 @@ class HS300Lib(
         val parsedData = """{"system":{"get_sysinfo":null}}"""
             .executeJsonCommand(ip)
             .substringAfter("Received:  ")
-            .also { println("response: $it") }
             .let { moshi.adapter(State::class.java).fromJson(it) }
             ?: throw IllegalStateException("could not parse energy meter json")
 
@@ -60,6 +59,6 @@ class HS300Lib(
     }
 
     private fun String.executeJsonCommand(ip: String): String {
-        return "./tplink-smartplug/tplink_smartplug.py -t $ip -j $this".exec(baseDir = cliDirectory)
+        return "./tplink-smartplug/tplink_smartplug.py -t $ip -j $this".exec(baseDir = libDirectory)
     }
 }

@@ -1,10 +1,12 @@
 package me.jameshunt.eventfarm.device.hs300
 
+import com.squareup.moshi.Moshi
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.toObservable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.eventfarm.core.*
+import java.io.File
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -14,7 +16,8 @@ class HS300 private constructor() {
     class OnOffOutput(
         override val config: Config,
         private val logger: Logger,
-        private val hS300Lib: HS300Lib
+        libDirectory: File,
+        moshi: Moshi
     ) : Output, Scheduler.Schedulable {
         data class Config(
             override val id: UUID,
@@ -22,6 +25,8 @@ class HS300 private constructor() {
             val name: String,
             val ip: String
         ) : Configurable.Config
+
+        private val hS300Lib: HS300Lib = HS300Lib(libDirectory, moshi)
 
         override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
             return onSchedule.subscribe({
@@ -42,7 +47,11 @@ class HS300 private constructor() {
         }
     }
 
-    class Inputs(override val config: Config, private val hS300Lib: HS300Lib) : Input {
+    class Inputs(
+        override val config: Config,
+        libDirectory: File,
+        moshi: Moshi
+    ) : Input {
         data class Config(
             override val id: UUID,
             override val className: String = Config::class.java.name,
@@ -53,6 +62,8 @@ class HS300 private constructor() {
             val eMeterUpdateIntervalSeconds: Int = 120
 //        val idPrefix: String // TODO?
         ) : Configurable.Config
+
+        private val hS300Lib: HS300Lib = HS300Lib(libDirectory, moshi)
 
         private val state = PublishSubject.create<HS300Lib.SystemInfo>()
         private val eMeter = PublishSubject.create<HS300Lib.PlugEnergyMeter>()

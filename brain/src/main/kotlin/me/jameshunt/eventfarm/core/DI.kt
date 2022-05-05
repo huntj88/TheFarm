@@ -6,10 +6,9 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.eventfarm.core.Scheduler.Schedulable
 import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
-import me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHumController
 import me.jameshunt.eventfarm.customcontroller.MyLightingController
+import me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHumController
 import me.jameshunt.eventfarm.vpd.VPDController
-import me.jameshunt.eventfarm.device.hs300.HS300Lib
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
@@ -49,14 +48,14 @@ object DI {
         .add(KotlinJsonAdapterFactory()).build()
 
     val loggerFactory = LoggerFactory()
-    val hS300Lib = HS300Lib(libDirectory, moshi)
     val inputEventManager: InputEventManager = InputEventManager(DefaultLogger("InputEventManager"))
 
     val scheduler: Scheduler = Scheduler(loggerFactory) { findId ->
         configurable.first { it.config.id == findId } as? Schedulable ?: throw IllegalStateException()
     }
 
-    private val configurableFactory = ConfigurableFactory(moshi, inputEventManager, scheduler, hS300Lib, loggerFactory)
+    private val configurableFactory =
+        ConfigurableFactory(loggerFactory, moshi, libDirectory, inputEventManager, scheduler)
 
     init {
         configJson

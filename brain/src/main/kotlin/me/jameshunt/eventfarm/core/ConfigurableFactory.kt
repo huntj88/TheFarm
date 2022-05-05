@@ -1,23 +1,24 @@
 package me.jameshunt.eventfarm.core
 
 import com.squareup.moshi.Moshi
-import me.jameshunt.eventfarm.device.hs300.HS300Lib
+import java.io.File
 import java.util.*
 
 // TODO: verify no duplicate when creating or reading?
 // TODO: create a map of id's to configurable names, so i can display it in logging?
 class ConfigurableFactory(
+    private val loggerFactory: LoggerFactory,
     private val moshi: Moshi,
+    libDirectory: File,
     inputEventManager: IInputEventManager,
-    scheduler: Scheduler,
-    hS300Lib: HS300Lib,
-    private val loggerFactory: LoggerFactory
+    scheduler: Scheduler
 ) {
 
     private val injectableComponents: Map<String, Any> = mapOf(
+        Moshi::class.java.name to moshi,
+        File::class.java.name to libDirectory,
         IInputEventManager::class.java.name to inputEventManager,
         Scheduler::class.java.name to scheduler,
-        HS300Lib::class.java.name to hS300Lib
     )
 
     // at some point i might have to add a migration step if I rename configurable class names or locations

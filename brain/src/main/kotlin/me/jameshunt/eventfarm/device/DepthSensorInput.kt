@@ -25,12 +25,14 @@ class DepthSensorInput(override val config: Config) : Input {
     // sudo ln -s /dev/ttyACM0 /dev/ttyS33
     // TODO: include this in startup script?
     // https://stackoverflow.com/questions/33480769/commportidentifier-getportidentifiers-rxtx-not-listing-all-ports#comment55117950_33649749
-    private val portName = "/dev/ttyS33"
+    private val portName = "/dev/ttyS33" // todo: move to config
 
+    /** communication with serial port using blocking call */
+    private val serialCommunicationExecutor = Executors.newSingleThreadExecutor()
     private val distanceFromWaterCentimeters = PublishSubject.create<Float>()
 
     init {
-        connect().listen()
+        listenRetryForever()
     }
 
     override fun getInputEvents(): Observable<Input.InputEvent> {
@@ -57,6 +59,18 @@ class DepthSensorInput(override val config: Config) : Input {
         }
     }
 
+    private fun listenRetryForever() {
+        serialCommunicationExecutor.execute {
+            try {
+                connect().listen()
+            } catch (e: Exception) {
+                e.printStackTrace() // todo: logging
+                Thread.sleep(30_000)
+                listenRetryForever()
+            }
+        }
+    }
+
     private fun connect(): InputStream {
         val portIdentifier = CommPortIdentifier.getPortIdentifier(portName)
         if (portIdentifier.isCurrentlyOwned) {
@@ -75,15 +89,13 @@ class DepthSensorInput(override val config: Config) : Input {
     }
 
     private fun InputStream.listen() {
-        // TODO: subscribe and check for completion, should never complete
-        Executors.newSingleThreadExecutor().execute {
-            val scanner = Scanner(this)
-            // hasNextLine is a blocking call
-            while (scanner.hasNextLine()) {
-                val distanceInCentimeters = scanner.nextLine().toFloat()
-                distanceFromWaterCentimeters.onNext(distanceInCentimeters)
-            }
-            scanner.close()
+        val scanner = Scanner(this)
+        // hasNextLine is a blocking call
+        while (scanner.hasNextLine()) {
+            val distanceInCentimeters = scanner.nextLine().toFloat()
+            distanceFromWaterCentimeters.onNext(distanceInCentimeters)
         }
+        scanner.close()
+        close()
     }
 }
