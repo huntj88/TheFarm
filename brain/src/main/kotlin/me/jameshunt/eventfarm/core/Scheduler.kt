@@ -9,6 +9,8 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
+// TODO: persist scheduled stuff to sqlite? resume a schedule when rebooted?
+//  like putting H2O2 in the water 3 days after the last time. controller scheduling the h2o2 could check the last time it was scheduled for after reboot?
 class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedulable: (UUID) -> Schedulable) {
     data class ScheduleItem(
         val id: UUID,

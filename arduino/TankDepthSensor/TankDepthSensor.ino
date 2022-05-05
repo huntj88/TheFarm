@@ -10,20 +10,19 @@ void loop() {
   Serial.print(distanceCentimetersAvg());
   Serial.print("\n");
 
-  delay(5000);
+  delay(5000); // TODO: 2 minute delay
 }
 
-long distanceCentimetersAvg() {
-  int sum = 0;
+float distanceCentimetersAvg() {
+  float sum = 0.0;
   for (int i = 0; i < 10; i++) {
     sum += distanceCentimeters();
     delay(100); 
   }
-
-  return sum / 10;
+  return sum / 10.0;
 }
 
-long distanceCentimeters() {
+float distanceCentimeters() {
   // The PING is triggered by a HIGH pulse of 2 or more microseconds.
   // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
   pinMode(trig, OUTPUT);
@@ -41,9 +40,9 @@ long distanceCentimeters() {
   return microsecondsToCentimeters(duration);
 }
 
-long microsecondsToCentimeters(long microseconds) {
+float microsecondsToCentimeters(long microseconds) {
   // The speed of sound is 340 m/s or 29 microseconds per centimeter.
   // The ping travels out and back, so to find the distance of the
   // object we take half of the distance travelled.
-  return microseconds / 29 / 2;
+  return microseconds / 29.0 / 2.0;
 }

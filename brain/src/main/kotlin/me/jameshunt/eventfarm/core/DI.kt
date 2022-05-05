@@ -19,6 +19,11 @@ fun main() {
     DI
 }
 
+// TODO: controller for pressure pump on a timer, that also uses the depth sensor to ensure pump is not run when tank is empty
+// TODO: controller for alerts when tank is getting empty
+// TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
+// TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
+
 object DI {
     val configurable = mutableListOf<Configurable>()
     val libDirectory = File("libs").also {
