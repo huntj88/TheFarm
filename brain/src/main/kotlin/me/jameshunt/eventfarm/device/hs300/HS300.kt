@@ -49,6 +49,7 @@ class HS300 private constructor() {
 
     class Inputs(
         override val config: Config,
+        private val logger: Logger,
         libDirectory: File,
         moshi: Moshi
     ) : Input {
@@ -67,17 +68,30 @@ class HS300 private constructor() {
 
         private val state = PublishSubject.create<HS300Lib.SystemInfo>()
         private val eMeter = PublishSubject.create<HS300Lib.PlugEnergyMeter>()
+        private val error = PublishSubject.create<TypedValue.Error>()
 
         init {
             Observable.interval(0, 10, TimeUnit.SECONDS).subscribe(
-                { state.onNext(hS300Lib.getCurrentState(config.ip)) },
+                {
+                    try {
+                        state.onNext(hS300Lib.getCurrentState(config.ip))
+                    } catch (e: Exception) {
+                        logger.error("Could not get HS300 plug on/off states", e)
+                        error.onNext(TypedValue.Error(e))
+                    }
+                },
                 { throw it }
             )
 
             Observable.interval(10, 120, TimeUnit.SECONDS).subscribe(
                 {
-                    (0 until config.numPlugs).forEach { plugIndex ->
-                        eMeter.onNext(hS300Lib.getCurrentEnergyMeter(config.ip, plugIndex))
+                    try {
+                        (0 until config.numPlugs).forEach { plugIndex ->
+                            eMeter.onNext(hS300Lib.getCurrentEnergyMeter(config.ip, plugIndex))
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Could not get HS300 energy meter data", e)
+                        error.onNext(TypedValue.Error(e))
                     }
                 },
                 { throw it }
@@ -115,7 +129,11 @@ class HS300 private constructor() {
                 )
             }
 
-            return stateEvents.mergeWith(eMeterEvents)
+            val errorEvents = error.map { error ->
+                Input.InputEvent(config.id, null, Instant.now(), error)
+            }
+
+            return Observable.merge(stateEvents, eMeterEvents, errorEvents)
         }
     }
 }

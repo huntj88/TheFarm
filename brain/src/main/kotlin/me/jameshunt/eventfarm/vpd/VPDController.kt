@@ -35,11 +35,11 @@ class VPDController(
     private fun handle(): Observable<Input.InputEvent> {
         return inputEventManager
             .getEventStream()
-            .filter { it.inputId == config.vpdInputId && it.index == config.humidifierOutputIndex }
+            .filter { it.inputId == config.vpdInputId && it.value is TypedValue.Pressure }
             .throttleLatest(10, TimeUnit.SECONDS)
             .filter {
-                val vpd = it.value as TypedValue.Pressure.Pascal
-                vpd.value > 925
+                val vpdPascal = (it.value as TypedValue.Pressure).asPascal()
+                vpdPascal.value > 925
             }
             .doOnNext {
                 logger.debug("VPD too high, raising humidity")

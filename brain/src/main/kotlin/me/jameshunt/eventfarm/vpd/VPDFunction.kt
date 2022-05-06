@@ -28,17 +28,15 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             .filter { it.inputId == config.humidityId }
             .filter { it.value is TypedValue.Percent }
 
-        return Observable.combineLatest(tempStream, humidityStream) { temp, humidity ->
-            Input.InputEvent(config.id, null, Instant.now(), calcVPD(temp.value, humidity.value))
+        return Observable.combineLatest(tempStream, humidityStream) { t, h ->
+            val temperature = (t.value as TypedValue.Temperature).asCelsius()
+            val humidity = (h.value as TypedValue.Percent)
+
+            Input.InputEvent(config.id, null, Instant.now(), calcVPD(temperature, humidity))
         }.throttleLatest(100, TimeUnit.MILLISECONDS)
     }
 
-    private fun calcVPD(temp: TypedValue, humidity: TypedValue): TypedValue {
-        val tempValue = (temp as? TypedValue.Temperature)?.asCelsius()?.value
-            ?: throw IllegalArgumentException("expected temperature")
-        val humidityValue =
-            (humidity as? TypedValue.Percent)?.value ?: throw IllegalArgumentException("expected percent")
-
+    private fun calcVPD(temp: TypedValue.Temperature, humidity: TypedValue.Percent): TypedValue.Pressure {
         // TODO: correct math
         return TypedValue.Pressure.Pascal(650f)
     }

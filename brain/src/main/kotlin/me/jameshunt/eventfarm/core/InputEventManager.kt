@@ -34,10 +34,3 @@ class InputEventManager(
         }, { throw it })
     }
 }
-
-//class InputEventLogger(inputEventManager: InputEventManager) {
-//    init {
-//        // TODO: log somewhere
-//        inputEventManager.getEventStream().subscribe({ println(it) }, { throw it })
-//    }
-//}

@@ -35,11 +35,18 @@ sealed class TypedValue {
         data class Pascal(val value: Float) : Pressure()
         data class PSI(val value: Float) : Pressure()
         data class Bar(val value: Float) : Pressure()
+
+        fun asPascal(): Pascal = when (this) {
+            is Pascal -> this
+            is Bar -> TODO()
+            is PSI -> TODO()
+        }
     }
 
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
+    data class Error(val err: Exception): TypedValue()
 }
 
 interface Configurable {

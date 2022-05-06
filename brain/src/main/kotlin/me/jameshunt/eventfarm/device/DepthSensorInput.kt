@@ -6,13 +6,14 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Input
+import me.jameshunt.eventfarm.core.Logger
 import me.jameshunt.eventfarm.core.TypedValue
 import java.io.InputStream
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
-class DepthSensorInput(override val config: Config) : Input {
+class DepthSensorInput(override val config: Config, private val logger: Logger) : Input {
     data class Config(
         override val id: UUID,
         override val className: String,
@@ -29,16 +30,18 @@ class DepthSensorInput(override val config: Config) : Input {
 
     /** communication with serial port using blocking call */
     private val serialCommunicationExecutor = Executors.newSingleThreadExecutor()
-    private val distanceFromWaterCentimeters = PublishSubject.create<Float>()
+
+    private val waterDistance = PublishSubject.create<TypedValue.Length.Centimeter>()
+    private val error = PublishSubject.create<TypedValue.Error>()
 
     init {
         listenRetryForever()
     }
 
     override fun getInputEvents(): Observable<Input.InputEvent> {
-        return distanceFromWaterCentimeters.flatMap { cm ->
+        val resultEvents = waterDistance.flatMap { cm ->
             val time = Instant.now()
-            val depthCorrected = cm - config.depthWhenFullCentimeters
+            val depthCorrected = cm.value - config.depthWhenFullCentimeters
             val depthOfTankCorrected = config.depthOfTankCentimeters - config.depthWhenFullCentimeters
             val missing = depthCorrected / depthOfTankCorrected
             val percentRemaining = (1f - missing).coerceIn(0f, 1f)
@@ -47,7 +50,7 @@ class DepthSensorInput(override val config: Config) : Input {
                     inputId = config.id,
                     index = null,
                     time = time,
-                    value = TypedValue.Length.Centimeter(cm)
+                    value = cm
                 ),
                 Input.InputEvent(
                     inputId = config.id,
@@ -57,6 +60,12 @@ class DepthSensorInput(override val config: Config) : Input {
                 )
             )
         }
+
+        val errorEvents = error.map { error ->
+            Input.InputEvent(config.id, null, Instant.now(), error)
+        }
+
+        return Observable.merge(resultEvents, errorEvents)
     }
 
     private fun listenRetryForever() {
@@ -64,7 +73,8 @@ class DepthSensorInput(override val config: Config) : Input {
             try {
                 connect().listen()
             } catch (e: Exception) {
-                e.printStackTrace() // todo: logging
+                logger.error("could not read depth sensor serial port data", e)
+                error.onNext(TypedValue.Error(e))
                 Thread.sleep(30_000)
                 listenRetryForever()
             }
@@ -93,7 +103,7 @@ class DepthSensorInput(override val config: Config) : Input {
         // hasNextLine is a blocking call
         while (scanner.hasNextLine()) {
             val distanceInCentimeters = scanner.nextLine().toFloat()
-            distanceFromWaterCentimeters.onNext(distanceInCentimeters)
+            waterDistance.onNext(TypedValue.Length.Centimeter(distanceInCentimeters))
         }
         scanner.close()
         close()

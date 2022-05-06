@@ -22,6 +22,7 @@ fun main() {
 // TODO: controller for alerts when tank is getting empty
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
 // TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
+// TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
 
 object DI {
     val configurable = mutableListOf<Configurable>()
