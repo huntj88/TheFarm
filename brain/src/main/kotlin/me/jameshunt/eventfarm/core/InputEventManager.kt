@@ -9,7 +9,10 @@ interface IInputEventManager {
     fun getEventStream(): Observable<Input.InputEvent>
 }
 
-class InputEventManager(private val logger: Logger) : IInputEventManager {
+class InputEventManager(
+    private val loggerFactory: LoggerFactory,
+    private val getConfigurable: (UUID) -> Configurable
+) : IInputEventManager {
     private val streamListeners = mutableMapOf<UUID, Disposable>()
     private val eventStream = PublishSubject.create<Input.InputEvent>()
 
@@ -24,7 +27,11 @@ class InputEventManager(private val logger: Logger) : IInputEventManager {
     override fun getEventStream(): Observable<Input.InputEvent> = eventStream
 
     init {
-        getEventStream().subscribe({ logger.trace(it.toString()) }, { throw it })
+        getEventStream().subscribe({ inputEvent ->
+            val config = getConfigurable.invoke(inputEvent.inputId).config
+            val logger = loggerFactory.create(config)
+            logger.trace(inputEvent.toString())
+        }, { throw it })
     }
 }
 

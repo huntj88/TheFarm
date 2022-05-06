@@ -68,6 +68,7 @@ interface Logger {
 }
 
 class LoggerFactory {
+    // TODO reuse loggers via hashmap
     // TODO could add an loggingEnabled flag for each config somehow. if false return a noOp implementation
     fun create(config: Configurable.Config): Logger = DefaultConfigLogger(config)
 }

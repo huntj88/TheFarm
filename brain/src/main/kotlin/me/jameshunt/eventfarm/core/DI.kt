@@ -48,10 +48,11 @@ object DI {
         .add(KotlinJsonAdapterFactory()).build()
 
     val loggerFactory = LoggerFactory()
-    val inputEventManager: InputEventManager = InputEventManager(DefaultLogger("InputEventManager"))
+    val inputEventManager: InputEventManager = InputEventManager(loggerFactory) { it.getConfigurable() }
 
     val scheduler: Scheduler = Scheduler(loggerFactory) { findId ->
-        configurable.first { it.config.id == findId } as? Schedulable ?: throw IllegalStateException()
+        val configurable = findId.getConfigurable()
+        configurable as? Schedulable ?: throw IllegalArgumentException("configurable is not schedulable: $configurable")
     }
 
     private val configurableFactory =
@@ -96,6 +97,11 @@ object DI {
             index = null
         )
         scheduler.schedule(myLightingControllerSchedule)
+    }
+
+    private fun UUID.getConfigurable(): Configurable {
+        return configurable.firstOrNull { it.config.id == this }
+            ?: throw IllegalStateException("Configurable not found: $this")
     }
 }
 
