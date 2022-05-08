@@ -23,6 +23,9 @@ fun main() {
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
 // TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
 // TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
+// TODO: controller for taking timelapse photos,
+//  Camera would need to be an input with Input.InputEvent(data=TypedValue.Image(imgId)) if you wanted a record that could be used internally
+//  otherwise, camera would just be an output, an action that can be scheduled (more like this at the moment with the way the android app works
 
 object DI {
     val configurable = mutableListOf<Configurable>()
