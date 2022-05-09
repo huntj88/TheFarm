@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
+@Deprecated("entire me.jameshunt.thefarm package is deprecated")
 fun main(args: Array<String>) {
     val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:farm.db") // TODO: in memory should be on disk
     Database.Schema.create(driver)

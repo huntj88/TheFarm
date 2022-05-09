@@ -20,12 +20,17 @@ fun main() {
 
 // TODO: controller for pressure pump on a timer, that also uses the depth sensor to ensure pump is not run when tank is empty
 // TODO: controller for alerts when tank is getting empty
+// TODO: controller for reducing water usage when less than 10% remaining
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
 // TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
 // TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
+// TODO: install script of libs and dependencies. tplink-smartplug, adb (install is different on pi and linux), etc
+// TODO: dependencies that are a server (like mqtt broker) could be run with docker
+// TODO: end-to-end encryption of mqtt message content, but start with plaintext
 // TODO: controller for taking timelapse photos,
 //  Camera would need to be an input with Input.InputEvent(data=TypedValue.Image(imgId)) if you wanted a record that could be used internally
 //  otherwise, camera would just be an output, an action that can be scheduled (more like this at the moment with the way the android app works
+//  ensure camera reset on camera app
 
 object DI {
     val configurable = mutableListOf<Configurable>()

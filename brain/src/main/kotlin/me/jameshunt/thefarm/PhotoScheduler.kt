@@ -5,7 +5,6 @@ import java.net.NetworkInterface
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-// TODO: adb does not work by default on raspberry pi (armv7)
 class PhotoScheduler(
     private val timer: ScheduledThreadPoolExecutor,
     private val logger: TypedFarmLogger<PhotoScheduler>
@@ -35,7 +34,6 @@ class PhotoScheduler(
         }
     }
 
-    @Deprecated("deprecated until adb raspberry pi workaround found")
     fun schedule() {
         getLocalNetworkIp()
         timer.scheduleWithFixedDelay(takePhotoTask, 0, 1, TimeUnit.HOURS)
