@@ -4,7 +4,6 @@ import com.squareup.moshi.Moshi
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.toObservable
-import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.eventfarm.core.*
 import java.io.File
 import java.time.Instant
@@ -66,74 +65,50 @@ class HS300 private constructor() {
 
         private val hS300Lib: HS300Lib = HS300Lib(libDirectory, moshi)
 
-        private val state = PublishSubject.create<HS300Lib.SystemInfo>()
-        private val eMeter = PublishSubject.create<HS300Lib.PlugEnergyMeter>()
-        private val error = PublishSubject.create<TypedValue.Error>()
-
-        init {
-            Observable.interval(0, 10, TimeUnit.SECONDS).subscribe(
-                {
-                    try {
-                        state.onNext(hS300Lib.getCurrentState(config.ip))
-                    } catch (e: Exception) {
-                        logger.error("Could not get HS300 plug on/off states", e)
-                        error.onNext(TypedValue.Error(e))
-                    }
-                },
-                { throw it }
-            )
-
-            Observable.interval(10, 120, TimeUnit.SECONDS).subscribe(
-                {
-                    try {
-                        (0 until config.numPlugs).forEach { plugIndex ->
-                            eMeter.onNext(hS300Lib.getCurrentEnergyMeter(config.ip, plugIndex))
-                        }
-                    } catch (e: Exception) {
-                        logger.error("Could not get HS300 energy meter data", e)
-                        error.onNext(TypedValue.Error(e))
-                    }
-                },
-                { throw it }
-            )
+        override fun getInputEvents(): Observable<Input.InputEvent> {
+            return Observable.merge(getStateEvents(), getEnergyMeterEvents())
         }
 
-        override fun getInputEvents(): Observable<Input.InputEvent> {
-            val stateEvents = state.flatMap {
-                it.children
-                    .map { plug ->
+        private fun getStateEvents(): Observable<Input.InputEvent> {
+            return Observable
+                .interval(0, 10, TimeUnit.SECONDS)
+                .map { hS300Lib.getCurrentState(config.ip) }
+                .flatMap {
+                    it.children.map { plug ->
                         Input.InputEvent(
                             config.id,
                             plug.index,
                             Instant.now(),
                             TypedValue.Bool(plug.state == 1)
                         )
-                    }
-                    .toObservable()
-            }
+                    }.toObservable()
+                }
+        }
 
-            val eMeterEvents = eMeter.flatMap {
-                Observable.just(
-                    Input.InputEvent(
-                        config.id,
-                        it.slot_id,
-                        Instant.now(),
-                        TypedValue.Watt(it.power_mw / 1000F)
-                    ),
-                    Input.InputEvent(
-                        config.id,
-                        it.slot_id,
-                        Instant.now(),
-                        TypedValue.WattHour(it.total_wh.toFloat())
-                    ),
-                )
-            }
-
-            val errorEvents = error.map { error ->
-                Input.InputEvent(config.id, null, Instant.now(), error)
-            }
-
-            return Observable.merge(stateEvents, eMeterEvents, errorEvents)
+        private fun getEnergyMeterEvents(): Observable<Input.InputEvent> {
+            return Observable
+                .interval(10, 120, TimeUnit.SECONDS)
+                .flatMap {
+                    (0 until config.numPlugs)
+                        .map { plugIndex -> hS300Lib.getCurrentEnergyMeter(config.ip, plugIndex) }
+                        .toObservable()
+                }
+                .flatMap {
+                    Observable.just(
+                        Input.InputEvent(
+                            config.id,
+                            it.slot_id,
+                            Instant.now(),
+                            TypedValue.Watt(it.power_mw / 1000F)
+                        ),
+                        Input.InputEvent(
+                            config.id,
+                            it.slot_id,
+                            Instant.now(),
+                            TypedValue.WattHour(it.total_wh.toFloat())
+                        ),
+                    )
+                }
         }
     }
 }

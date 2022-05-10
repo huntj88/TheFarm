@@ -3,6 +3,7 @@ package me.jameshunt.eventfarm.core
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.subjects.PublishSubject
+import java.time.Instant
 import java.util.*
 
 interface IInputEventManager {
@@ -20,7 +21,20 @@ class InputEventManager(
         val inputId = input.config.id
         val disposable = streamListeners[inputId]
         if (disposable == null || disposable.isDisposed) {
-            streamListeners[inputId] = input.getInputEvents().subscribe({ eventStream.onNext(it) }, { throw it })
+            streamListeners[inputId] = input
+                .getInputEventsErrorResume()
+                .subscribe(
+                    { eventStream.onNext(it) },
+                    { throw it }
+                )
+        }
+    }
+
+    private fun Input.getInputEventsErrorResume(): Observable<Input.InputEvent> {
+        return getInputEvents().onErrorResumeNext {
+            getInputEventsErrorResume().startWith(
+                Observable.just(Input.InputEvent(config.id, null, Instant.now(), TypedValue.Error(it)))
+            )
         }
     }
 
@@ -30,7 +44,11 @@ class InputEventManager(
         getEventStream().subscribe({ inputEvent ->
             val config = getConfigurable.invoke(inputEvent.inputId).config
             val logger = loggerFactory.create(config)
-            logger.trace(inputEvent.toString())
+            if (inputEvent.value is TypedValue.Error) {
+                logger.error(inputEvent.toString(), inputEvent.value.err)
+            } else {
+                logger.trace(inputEvent.toString())
+            }
         }, { throw it })
     }
 }

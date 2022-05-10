@@ -11,7 +11,8 @@ class ConfigurableFactory(
     private val moshi: Moshi,
     libDirectory: File,
     inputEventManager: IInputEventManager,
-    scheduler: Scheduler
+    scheduler: Scheduler,
+    mqttManager: MQTTManager,
 ) {
 
     private val injectableComponents: Map<String, Any> = mapOf(
@@ -19,6 +20,7 @@ class ConfigurableFactory(
         File::class.java.name to libDirectory,
         IInputEventManager::class.java.name to inputEventManager,
         Scheduler::class.java.name to scheduler,
+        MQTTManager::class.java.name to mqttManager,
     )
 
     // at some point i might have to add a migration step if I rename configurable class names or locations

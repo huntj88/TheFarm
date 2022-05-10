@@ -26,11 +26,14 @@ fun main() {
 // TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
 // TODO: install script of libs and dependencies. tplink-smartplug, adb (install is different on pi and linux), etc
 // TODO: dependencies that are a server (like mqtt broker) could be run with docker
-// TODO: end-to-end encryption of mqtt message content, but start with plaintext
+//  docker run -it -p 1883:1883 eclipse-mosquitto mosquitto -c /mosquitto-no-auth.conf
+// TODO: security for mqtt, but start with plaintext
 // TODO: controller for taking timelapse photos,
 //  Camera would need to be an input with Input.InputEvent(data=TypedValue.Image(imgId)) if you wanted a record that could be used internally
 //  otherwise, camera would just be an output, an action that can be scheduled (more like this at the moment with the way the android app works
 //  ensure camera reset on camera app
+
+// TODO: can i re-instantiate an input when it errors due to subject already being disposed?
 
 object DI {
     val configurable = mutableListOf<Configurable>()
@@ -64,8 +67,10 @@ object DI {
         configurable as? Schedulable ?: throw IllegalArgumentException("configurable is not schedulable: $configurable")
     }
 
+    val mqttManager = MQTTManager()
+
     private val configurableFactory =
-        ConfigurableFactory(loggerFactory, moshi, libDirectory, inputEventManager, scheduler)
+        ConfigurableFactory(loggerFactory, moshi, libDirectory, inputEventManager, scheduler, mqttManager)
 
     init {
         configJson
