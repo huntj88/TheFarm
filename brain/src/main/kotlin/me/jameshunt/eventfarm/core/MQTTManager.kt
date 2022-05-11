@@ -3,6 +3,7 @@ package me.jameshunt.eventfarm.core
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
+import me.jameshunt.thefarm.exec
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.util.concurrent.TimeUnit
@@ -22,6 +23,9 @@ class MQTTManager(private val logger: Logger) {
     private val client by lazy {
         // will not be initialized unless there are mqtt inputs
         // TODO: start mqtt broker
+        startMQTTBroker().blockingSubscribe(
+            {}, { logger.error("could not start or already started MQTT broker", it) }
+        )
         createClient()
     }
 
@@ -86,6 +90,27 @@ class MQTTManager(private val logger: Logger) {
             connect(connOpts)
             logger.debug("mqtt client connected to broker")
         }
+    }
+
+    private fun startMQTTBroker(): Completable {
+        // TODO: handle docker not being installed?
+        val downloadImageCmd = "docker pull eclipse-mosquitto:2.0.14"
+        val startMQTTBrokerCmd =
+            "docker run -itd -p 1883:1883 eclipse-mosquitto:2.0.14 mosquitto -c /mosquitto-no-auth.conf"
+
+        return Completable
+            .fromAction {
+                logger.debug("downloading MQTT message broker docker image")
+                downloadImageCmd.exec()
+            }
+            .andThen(
+                Completable
+                    .fromAction {
+                        logger.debug("starting MQTT message broker docker image")
+                        startMQTTBrokerCmd.exec()
+                    }
+                    .delay(3, TimeUnit.SECONDS) // wait for broker to allow connections
+            )
     }
 }
 
