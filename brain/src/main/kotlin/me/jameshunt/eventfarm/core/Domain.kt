@@ -21,8 +21,8 @@ sealed class TypedValue {
         }
     }
 
-    sealed class Length: TypedValue() {
-        data class Centimeter(val value: Float): Length()
+    sealed class Length : TypedValue() {
+        data class Centimeter(val value: Float) : Length()
     }
 
     data class Percent(val value: Float) : TypedValue() {
@@ -31,7 +31,7 @@ sealed class TypedValue {
         }
     }
 
-    sealed class Pressure: TypedValue() {
+    sealed class Pressure : TypedValue() {
         data class Pascal(val value: Float) : Pressure()
         data class PSI(val value: Float) : Pressure()
         data class Bar(val value: Float) : Pressure()
@@ -46,7 +46,7 @@ sealed class TypedValue {
     data class WattHour(val value: Float) : TypedValue()
     data class Watt(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
-    data class Error(val err: Throwable): TypedValue()
+    data class Error(val err: Throwable) : TypedValue()
 }
 
 interface Configurable {
@@ -63,6 +63,10 @@ interface Input : Configurable {
     // if input has multiple input values of the same type an index is used to differentiate
     data class InputEvent(val inputId: UUID, val index: Int?, val time: Instant, val value: TypedValue)
 
+    /**
+     * return an InputEvent or multiple InputEvents with different TypedValues
+     * will only ever have one subscriber [InputEventManager]
+     * */
     fun getInputEvents(): Observable<InputEvent>
 }
 
@@ -81,7 +85,7 @@ class LoggerFactory {
 }
 
 // TODO: real logging lib?
-class DefaultConfigLogger(private val config: Configurable.Config): Logger {
+class DefaultConfigLogger(private val config: Configurable.Config) : Logger {
     private val maxStringLengthOfLevel = "DEBUG".length
     override fun debug(message: String) {
         log("DEBUG", message)
@@ -102,7 +106,7 @@ class DefaultConfigLogger(private val config: Configurable.Config): Logger {
     }
 }
 
-class DefaultLogger(private val name: String): Logger {
+class DefaultLogger(private val name: String) : Logger {
     private val maxStringLengthOfLevel = "DEBUG".length
     override fun debug(message: String) {
         log("DEBUG", message)

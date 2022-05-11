@@ -22,6 +22,7 @@ fun main() {
 // TODO: controller for alerts when tank is getting empty
 // TODO: controller for reducing water usage when less than 10% remaining
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
+//  (and later use dissolved oxygen sensor, which i think might be proportional to h2o2 concentration)
 // TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
 // TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
 // TODO: install script of libs and dependencies. tplink-smartplug, adb (install is different on pi and linux), etc
@@ -67,7 +68,7 @@ object DI {
         configurable as? Schedulable ?: throw IllegalArgumentException("configurable is not schedulable: $configurable")
     }
 
-    val mqttManager = MQTTManager()
+    val mqttManager = MQTTManager(DefaultLogger(MQTTManager::class.java.name))
 
     private val configurableFactory =
         ConfigurableFactory(loggerFactory, moshi, libDirectory, inputEventManager, scheduler, mqttManager)
