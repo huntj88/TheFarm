@@ -75,6 +75,7 @@ interface Output : Scheduler.Schedulable, Configurable
 interface Logger {
     fun trace(message: String)
     fun debug(message: String)
+    fun warn(message: String, throwable: Throwable?)
     fun error(message: String, throwable: Throwable?)
 }
 
@@ -86,13 +87,17 @@ class LoggerFactory {
 
 // TODO: real logging lib?
 class DefaultConfigLogger(private val config: Configurable.Config) : Logger {
-    private val maxStringLengthOfLevel = "DEBUG".length
+    private val maxStringLengthOfLevel = "WARNING".length
+    override fun trace(message: String) {
+        log("TRACE", message)
+    }
+
     override fun debug(message: String) {
         log("DEBUG", message)
     }
 
-    override fun trace(message: String) {
-        log("TRACE", message)
+    override fun warn(message: String, throwable: Throwable?) {
+        log("WARNING", "$message, error: ${throwable?.stackTraceToString()}")
     }
 
     override fun error(message: String, throwable: Throwable?) {
@@ -107,13 +112,17 @@ class DefaultConfigLogger(private val config: Configurable.Config) : Logger {
 }
 
 class DefaultLogger(private val name: String) : Logger {
-    private val maxStringLengthOfLevel = "DEBUG".length
+    private val maxStringLengthOfLevel = "WARNING".length
+    override fun trace(message: String) {
+        log("TRACE", message)
+    }
+
     override fun debug(message: String) {
         log("DEBUG", message)
     }
 
-    override fun trace(message: String) {
-        log("TRACE", message)
+    override fun warn(message: String, throwable: Throwable?) {
+        log("WARNING", "$message, error: ${throwable?.stackTraceToString()}")
     }
 
     override fun error(message: String, throwable: Throwable?) {

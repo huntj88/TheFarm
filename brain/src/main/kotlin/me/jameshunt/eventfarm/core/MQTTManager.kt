@@ -22,10 +22,7 @@ class MQTTManager(private val logger: Logger) {
 
     private val client by lazy {
         // will not be initialized unless there are mqtt inputs
-        // TODO: start mqtt broker
-        startMQTTBroker().blockingSubscribe(
-            {}, { logger.error("could not start or already started MQTT broker", it) }
-        )
+        startMQTTBroker()
         createClient()
     }
 
@@ -47,6 +44,10 @@ class MQTTManager(private val logger: Logger) {
                 if (!wasConnected && isConnected) {
                     logger.debug("mqtt client reconnected to broker")
                     subscribedTopics.forEach { client.subscribe(it) }
+                }
+
+                if (!wasConnected && !isConnected) {
+                    startMQTTBroker()
                 }
             }
             .subscribe()
@@ -72,7 +73,7 @@ class MQTTManager(private val logger: Logger) {
         return MqttClient("tcp://localhost:1883", "brain", MemoryPersistence()).apply {
             setCallback(object : MqttCallback {
                 override fun connectionLost(cause: Throwable) {
-                    logger.error("mqtt client disconnected from broker", cause)
+                    logger.warn("mqtt client disconnected from broker", cause)
                 }
 
                 @Throws(Exception::class)
@@ -92,25 +93,26 @@ class MQTTManager(private val logger: Logger) {
         }
     }
 
-    private fun startMQTTBroker(): Completable {
-        // TODO: handle docker not being installed?
+    private fun startMQTTBroker() {
         val downloadImageCmd = "docker pull eclipse-mosquitto:2.0.14"
         val startMQTTBrokerCmd =
             "docker run -itd -p 1883:1883 eclipse-mosquitto:2.0.14 mosquitto -c /mosquitto-no-auth.conf"
 
-        return Completable
-            .fromAction {
-                logger.debug("downloading MQTT message broker docker image")
-                downloadImageCmd.exec()
-            }
-            .andThen(
-                Completable
-                    .fromAction {
-                        logger.debug("starting MQTT message broker docker image")
-                        startMQTTBrokerCmd.exec()
-                    }
-                    .delay(3, TimeUnit.SECONDS) // wait for broker to allow connections
-            )
+        try {
+            logger.debug("downloading MQTT message broker docker image")
+            downloadImageCmd.exec()
+        } catch (e: Exception) {
+            // TODO: handle docker not being installed? docker install script?
+            logger.error("could not download docker image, is docker installed?", e)
+        }
+
+        try {
+            logger.debug("starting MQTT message broker docker image")
+            startMQTTBrokerCmd.exec()
+        } catch (e: Exception) {
+            // TODO: more detailed error messages
+            logger.warn("could not start or MQTT broker already started", e)
+        }
     }
 }
 
