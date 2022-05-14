@@ -7,7 +7,6 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.eventfarm.core.Scheduler.Schedulable
 import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
 import me.jameshunt.eventfarm.customcontroller.MyLightingController
-import me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHumController
 import me.jameshunt.eventfarm.vpd.VPDController
 import java.io.File
 import java.time.Instant
@@ -95,14 +94,14 @@ object DI {
 //        val ecPhControllerSchedule = Scheduler.ScheduleItem(ecPhControllerId, TypedValue.None, Instant.now(), endTime)
 //        scheduler.schedule(ecPhControllerSchedule)
 
-        val ezoHumControllerSchedule = ScheduleItem(
-            id = configurable.first { it is AtlasScientificEzoHumController }.config.id,
-            data = TypedValue.None,
-            startTime = Instant.now(),
-            endTime = null,
-            index = null
-        )
-        scheduler.schedule(ezoHumControllerSchedule)
+//        val ezoHumControllerSchedule = ScheduleItem(
+//            id = configurable.first { it is AtlasScientificEzoHumController }.config.id,
+//            data = TypedValue.None,
+//            startTime = Instant.now(),
+//            endTime = null,
+//            index = null
+//        )
+//        scheduler.schedule(ezoHumControllerSchedule)
 
         val myLightingControllerSchedule = ScheduleItem(
             id = configurable.first { it is MyLightingController }.config.id,

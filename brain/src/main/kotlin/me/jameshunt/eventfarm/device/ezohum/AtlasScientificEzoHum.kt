@@ -1,47 +1,52 @@
 package me.jameshunt.eventfarm.device.ezohum
 
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Input
-import me.jameshunt.eventfarm.core.Scheduler
+import me.jameshunt.eventfarm.core.MQTTManager
 import me.jameshunt.eventfarm.core.TypedValue
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import java.time.Instant
 import java.util.*
 
-class AtlasScientificEzoHum(override val config: Config) : Input, Scheduler.Schedulable {
+class AtlasScientificEzoHum(override val config: Config, private val mqttManager: MQTTManager) : Input { // TODO: make schedulable?
     data class Config(
         override val id: UUID,
         override val className: String = Config::class.java.name,
-        val name: String
+        val name: String,
+        val mqttTopic: String,
     ) : Configurable.Config
 
-    private val inputEventStream = PublishSubject.create<Input.InputEvent>()
-
-    override fun getInputEvents(): Observable<Input.InputEvent> = inputEventStream
-
-    override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
-        return onSchedule.subscribe(
-            {
-                if (it.isStarting) {
-                    val time = Instant.now()
-                    val (temperature, humidity) = getSensorData()
-                    inputEventStream.onNext(Input.InputEvent(config.id, null, time, temperature))
-                    inputEventStream.onNext(Input.InputEvent(config.id, null, time, humidity))
-                }
-            },
-            { throw it }
-        )
+    override fun getInputEvents(): Observable<Input.InputEvent> {
+        return mqttManager
+            .listen(config.mqttTopic)
+            .flatMap { parseMessage(it) }
     }
 
-    private data class EzoHumData(
-        val temperature: TypedValue.Temperature,
-        val humidity: TypedValue.Percent
-    )
+    private fun parseMessage(mqttMessage: MqttMessage): Observable<Input.InputEvent> {
+        val time = Instant.now()
+        val (humidityPercent0To100, tempCelsius) = try {
+            mqttMessage.payload.decodeToString()
+                .also { check("," in it) { "Could not parse ezoHum values" } }
+                .split(",")
+                .let { it[0].toFloat() to it[1].toFloat() }
+        } catch (e: Exception) {
+            return Observable.just(Input.InputEvent(config.id, null, time, TypedValue.Error(e)))
+        }
 
-    private fun getSensorData(): EzoHumData {
-        // TODO: get actual sensor data
-        return EzoHumData(temperature = TypedValue.Temperature.Celsius(20f), humidity = TypedValue.Percent(0.5f))
+        return Observable.just(
+            Input.InputEvent(
+                inputId = config.id,
+                index = null,
+                time = time,
+                value = TypedValue.Percent(humidityPercent0To100 / 100f)
+            ),
+            Input.InputEvent(
+                inputId = config.id,
+                index = null,
+                time = time,
+                value = TypedValue.Temperature.Celsius(tempCelsius)
+            )
+        )
     }
 }

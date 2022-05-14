@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * In this case a controller delegates scheduling of sensor values, instead of the input handling it internally
+ * TODO: would have to send an mqtt command and get a response, but thats not done
  */
 class AtlasScientificEzoHumController(
     override val config: Config,
@@ -34,9 +35,10 @@ class AtlasScientificEzoHumController(
 
     private fun handle(): Observable<Long> {
         return Observable.interval(0, 15, TimeUnit.SECONDS).doOnNext { _ ->
-            val now = Instant.now()
-            val collectDataScheduleItem = Scheduler.ScheduleItem(config.ezoHumInputId, null, TypedValue.None, now, null)
-            scheduler.schedule(collectDataScheduleItem)
+            // TODO?
+//            val now = Instant.now()
+//            val collectDataScheduleItem = Scheduler.ScheduleItem(config.ezoHumInputId, null, TypedValue.None, now, null)
+//            scheduler.schedule(collectDataScheduleItem)
         }
     }
 }
