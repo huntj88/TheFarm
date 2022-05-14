@@ -7,6 +7,7 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.eventfarm.core.Scheduler.Schedulable
 import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
 import me.jameshunt.eventfarm.customcontroller.MyLightingController
+import me.jameshunt.eventfarm.customcontroller.PressurePumpController
 import me.jameshunt.eventfarm.customcontroller.WateringController
 import me.jameshunt.eventfarm.vpd.VPDController
 import java.io.File
@@ -18,13 +19,9 @@ fun main() {
     DI
 }
 
-// TODO: controller for pressure pump on a timer, that also uses the depth sensor to ensure pump is not run when tank is empty
 // TODO: controller for alerts when tank is getting empty
-// TODO: controller that verifies tank gets lower when pump is on
-//  (check water level, pump until timer done, check water level and compare to before pumping)
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
 //  (and later use dissolved oxygen sensor, which i think might be proportional to h2o2 concentration)
-// TODO: controller for allowing air to escape from the line (pump would stop working, probably due to H2O2 releasing air bubbles)
 // TODO: controller for alerts when humidifier bucket is getting empty (need a sonar sensor on the bucket too)
 // TODO: install script of libs and dependencies. tplink-smartplug, adb (install is different on pi and linux), etc
 // TODO: controller for taking timelapse photos,
@@ -119,6 +116,15 @@ object DI {
             index = null
         )
         scheduler.schedule(wateringControllerSchedule)
+
+        val pressurePumpControllerSchedule = ScheduleItem(
+            id = configurable.first { it is PressurePumpController }.config.id,
+            data = TypedValue.None,
+            startTime = Instant.now(),
+            endTime = null,
+            index = null
+        )
+        scheduler.schedule(pressurePumpControllerSchedule)
     }
 
     private fun UUID.getConfigurable(): Configurable {

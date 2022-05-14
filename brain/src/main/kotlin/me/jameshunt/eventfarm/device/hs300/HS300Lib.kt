@@ -35,8 +35,8 @@ class HS300Lib(
         // TODO: uncomment
 //        setState.executeJsonCommand(ip)
         when (index) {
-            2, 3, 4 -> println("plug with index: $index is disabled")
-            0, 1, 5 -> setState.executeJsonCommand(ip)
+            3, 4 -> println("plug with index: $index is disabled")
+            0, 1, 2, 5 -> setState.executeJsonCommand(ip)
         }
     }
 
