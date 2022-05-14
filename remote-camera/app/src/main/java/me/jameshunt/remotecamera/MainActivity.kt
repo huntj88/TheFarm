@@ -24,9 +24,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val runId = intent.getIntExtra("runId", -1)
-        val destinationIp = intent.getStringExtra("destinationIp")
-            ?: throw IllegalStateException("destinationIp required")
 
         val imageCapture = ImageCapture.Builder()
             .setFlashMode(FLASH_MODE_ON)
@@ -47,14 +44,16 @@ class MainActivity : AppCompatActivity() {
                 imageCapture.takePicture(outputFileOptions, mainExecutor,
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onError(error: ImageCaptureException) {
-                            throw error
+                            // TODO: mqtt publish error
+                            finish()
                         }
 
                         override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                             Log.d(
                                 "Main", "took picture with size: ${saveFile.readBytes().size}"
                             )
-                            uploadTimeStampedFile(saveFile, runId, destinationIp)
+                            uploadTimeStampedFile(saveFile)
+                            // TODO: mqtt publish url
                         }
                     }
                 )
@@ -62,24 +61,24 @@ class MainActivity : AppCompatActivity() {
         }, mainExecutor)
     }
 
-    fun uploadTimeStampedFile(file: File, runId: Int, destinationIp: String) {
+    fun uploadTimeStampedFile(file: File) {
         Executors.newSingleThreadExecutor().execute {
             val time = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            getMinioClient(destinationIp).uploadObject(
+            getMinioClient().uploadObject(
                 UploadObjectArgs.builder()
                     .bucket("images")
                     .`object`("$time.jpg")
-                    .userMetadata(mapOf("runId" to "$runId"))
                     .filename(file.absolutePath)
                     .build()
             )
+            this@MainActivity.finish()
         }
     }
 
-    private fun getMinioClient(destinationIp: String): MinioClient {
+    private fun getMinioClient(): MinioClient {
         return MinioClient.builder()
-            .endpoint(destinationIp, 9000, false)
-            .credentials("minioadmin", "minioadmin")
+            .endpoint(Secrets.endpoint)
+            .credentials(Secrets.id, Secrets.key)
             .build()
     }
 }
