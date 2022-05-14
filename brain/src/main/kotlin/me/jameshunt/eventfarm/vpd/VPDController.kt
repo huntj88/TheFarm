@@ -38,19 +38,24 @@ class VPDController(
             .getEventStream()
             .filter { it.inputId == config.vpdInputId && it.value is TypedValue.Pressure }
             .throttleLatest(10, TimeUnit.SECONDS)
-            .filter {
-                val vpdPascal = (it.value as TypedValue.Pressure).asPascal()
-                vpdPascal.value > 925
-            }
             .doOnNext {
-                logger.debug("VPD too high, raising humidity")
+                val vpdPascal = (it.value as TypedValue.Pressure).asPascal()
+                val shouldBeOn = vpdPascal.value > 925
+
                 val startTime = Instant.now()
-                val endTime = startTime.plusSeconds(7)
+                val endTime = if (shouldBeOn) startTime.plusSeconds(7) else null
+
+                if (shouldBeOn) {
+                    logger.debug("VPD too high, raising humidity")
+                } else {
+                    logger.debug("making sure humidifier is off")
+                }
+
                 scheduler.schedule(
                     Scheduler.ScheduleItem(
                         config.humidifierOutputId,
                         config.humidifierOutputIndex,
-                        TypedValue.Bool(true),
+                        TypedValue.Bool(shouldBeOn),
                         startTime,
                         endTime
                     )
