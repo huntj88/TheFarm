@@ -2,13 +2,13 @@ package me.jameshunt.eventfarm.customcontroller
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import me.jameshunt.eventfarm.*
 import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Scheduler
 import me.jameshunt.eventfarm.core.TypedValue
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHumController
 
 /**
  * two [PeriodicController] could mimic the [AtlasScientificEzoHumController], but not the [ECPHExclusiveLockController]

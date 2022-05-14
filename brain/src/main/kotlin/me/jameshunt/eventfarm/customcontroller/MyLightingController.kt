@@ -30,7 +30,10 @@ class MyLightingController(
                 it.isEnding -> Observable.empty()
                 else -> Observable.error(IllegalStateException("Should not be possible"))
             }
-        }.subscribe({}, { throw it })
+        }.subscribe(
+            {},
+            { throw it }
+        )
     }
 
     private fun handle(): Observable<Boolean> {

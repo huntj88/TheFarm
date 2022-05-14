@@ -37,7 +37,7 @@ class HS300 private constructor() {
                     it.isStarting -> setState(requestedState, index)
                     it.isEnding -> setState(!requestedState, index)
                 }
-            }, { throw it })
+            }, { logger.error("could not set plug state", it) })
         }
 
         private fun setState(on: Boolean, index: Int) {

@@ -33,6 +33,7 @@ class VPDController(
     }
 
     private fun handle(): Observable<Input.InputEvent> {
+        // TODO: keep it on until value is under 925?
         return inputEventManager
             .getEventStream()
             .filter { it.inputId == config.vpdInputId && it.value is TypedValue.Pressure }
@@ -48,7 +49,7 @@ class VPDController(
                 scheduler.schedule(
                     Scheduler.ScheduleItem(
                         config.humidifierOutputId,
-                        null,
+                        config.humidifierOutputIndex,
                         TypedValue.Bool(true),
                         startTime,
                         endTime

@@ -13,6 +13,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
+@Deprecated("use mqtt version instead")
 class DepthSensorInput(override val config: Config, private val logger: Logger) : Input {
     data class Config(
         override val id: UUID,

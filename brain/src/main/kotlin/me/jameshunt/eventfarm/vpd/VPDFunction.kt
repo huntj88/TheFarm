@@ -8,6 +8,7 @@ import me.jameshunt.eventfarm.core.TypedValue
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 class VPDFunction(override val config: Config, private val inputEventManager: IInputEventManager) : Input {
     data class Config(
@@ -33,11 +34,13 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             val humidity = (h.value as TypedValue.Percent)
 
             Input.InputEvent(config.id, null, Instant.now(), calcVPD(temperature, humidity))
-        }.throttleLatest(100, TimeUnit.MILLISECONDS)
+        }.throttleLast(100, TimeUnit.MILLISECONDS)
     }
 
     private fun calcVPD(temp: TypedValue.Temperature, humidity: TypedValue.Percent): TypedValue.Pressure {
-        // TODO: correct math
-        return TypedValue.Pressure.Pascal(650f)
+        val tempC = temp.asCelsius().value
+        val saturatedVaporPressure = 610.7f * (10f.pow(7.5f * tempC / (237.3f + tempC)))
+        val vpdPascal = ((1f - humidity.value) / 1f) * saturatedVaporPressure
+        return TypedValue.Pressure.Pascal(vpdPascal)
     }
 }
