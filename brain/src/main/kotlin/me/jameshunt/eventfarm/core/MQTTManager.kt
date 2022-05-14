@@ -2,6 +2,7 @@ package me.jameshunt.eventfarm.core
 
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import me.jameshunt.thefarm.exec
 import org.eclipse.paho.client.mqttv3.*
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KProperty0
 import kotlin.reflect.jvm.isAccessible
 
-
+// TODO: security for mqtt, but starting with plaintext
 class MQTTManager(private val logger: Logger) {
     data class TopicPayload(val topic: String, val payload: MqttMessage)
 
@@ -63,6 +64,7 @@ class MQTTManager(private val logger: Logger) {
                 subscribedTopics.remove(topic)
                 client.unsubscribe(topic)
             }
+            .observeOn(Schedulers.io())
     }
 
     fun sendCommand(topic: String, data: String): Completable {

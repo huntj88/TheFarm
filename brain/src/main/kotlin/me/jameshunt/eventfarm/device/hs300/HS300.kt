@@ -11,6 +11,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 // device wrapper class is unused, but groups the related configurables
+// TODO: set up default plug states for startup and shutdown
 class HS300 private constructor() {
     class OnOffOutput(
         override val config: Config,

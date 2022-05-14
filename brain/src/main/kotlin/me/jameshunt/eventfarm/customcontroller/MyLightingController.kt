@@ -5,12 +5,13 @@ import io.reactivex.rxjava3.disposables.Disposable
 import me.jameshunt.eventfarm.core.*
 import java.time.Instant
 import java.time.LocalTime
-import java.util.UUID
+import java.util.*
 
 class MyLightingController(
     override val config: Config,
     private val inputEventManager: IInputEventManager,
-    private val scheduler: Scheduler
+    private val scheduler: Scheduler,
+    private val logger: Logger,
 ) : Scheduler.Schedulable {
     data class Config(
         override val id: UUID,
@@ -43,6 +44,7 @@ class MyLightingController(
             .doOnNext { isOn ->
                 val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
                 if (isOn != shouldBeOn) {
+                    logger.warn("Lights on is: $isOn, when lights on should be: $shouldBeOn, correcting state", null)
                     scheduler.schedule(
                         Scheduler.ScheduleItem(
                             config.lightOnOffOutputId,

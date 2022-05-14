@@ -85,7 +85,7 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
                 scheduleStream.onNext(it.scheduleItem)
             }
 
-            Thread.sleep(200) // TODO: much faster loop time
+            Thread.sleep(50)
             // todo: check elapsed time to ensure scheduling thread is never blocked unless flag set or something for debugging
         }
     }

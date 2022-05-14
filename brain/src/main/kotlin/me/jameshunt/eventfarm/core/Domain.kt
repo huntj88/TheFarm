@@ -106,7 +106,7 @@ class DefaultConfigLogger(private val config: Configurable.Config) : Logger {
 
     private fun log(level: String, message: String) {
         val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
-        val logMessage = "${Instant.now()}, ${levelRightAligned}, ${config.id}, ${config.className}, $message"
+        val logMessage = "${Instant.now()}, ${levelRightAligned}, ${Thread.currentThread().name}, ${config.id}, ${config.className}, $message"
         println(logMessage)
     }
 }
@@ -131,7 +131,7 @@ class DefaultLogger(private val name: String) : Logger {
 
     private fun log(level: String, message: String) {
         val levelRightAligned = level.prependIndent(" ".repeat(maxStringLengthOfLevel - level.length))
-        val logMessage = "${Instant.now()}, ${levelRightAligned}, $name, $message"
+        val logMessage = "${Instant.now()}, ${levelRightAligned}, ${Thread.currentThread().name}, $name, $message"
         println(logMessage)
     }
 }

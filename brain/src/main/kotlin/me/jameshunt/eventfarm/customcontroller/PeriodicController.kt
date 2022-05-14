@@ -22,6 +22,7 @@ class PeriodicController(
         override val id: UUID,
         override val className: String,
         val schedulableId: UUID,
+        val schedulableIndex: Int?,
         val periodMillis: Long,
         val durationMillis: Long?
     ) : Configurable.Config
@@ -40,7 +41,8 @@ class PeriodicController(
         return Observable.interval(0, config.periodMillis, TimeUnit.MILLISECONDS).doOnNext { _ ->
             val now = Instant.now()
             val end = config.durationMillis?.let { now.plusMillis(it) }
-            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, null, TypedValue.None, now, end))
+            // TODO: input data?
+            scheduler.schedule(Scheduler.ScheduleItem(config.schedulableId, config.schedulableIndex, TypedValue.None, now, end))
         }
     }
 }
