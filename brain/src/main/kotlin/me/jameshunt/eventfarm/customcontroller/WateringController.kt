@@ -11,20 +11,25 @@ import java.util.concurrent.TimeUnit
 // TODO: handle restarts gracefully, check when last watered using values in a DB (input on event, or schedule time?)
 /**
  * Controls how often plants are watered.
- * When the amount of water remaining in the reservoir gets low, water saving mode is enabled.
+ * When the amount of water remaining in the reservoir gets low, conserve water mode is enabled.
  */
 class WateringController(
     override val config: Config,
     private val scheduler: Scheduler,
-    private val eventManager: IInputEventManager
+    private val eventManager: IInputEventManager,
+    private val logger: Logger,
 ) : Configurable, Scheduler.Schedulable {
     data class Config(
         override val id: UUID,
         override val className: String,
         val schedulableId: UUID,
         val schedulableIndex: Int?,
+        val waterDepthInputId: UUID,
+        val waterDepthIndex: Int?,
         val periodMillis: Long,
-        val durationMillis: Long
+        val durationMillis: Long,
+        val conserveWaterUsagePercent: Float, // 0f-1f
+        val conserveWaterReservoirPercent: Float, // 0f-1f
     ) : Configurable.Config
 
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
@@ -39,7 +44,7 @@ class WateringController(
 
     private fun handle(): Observable<Long> {
         val percentRemainingReservoir = eventManager.getEventStream()
-            .filter { it.inputId == UUID.fromString("00000000-0000-0000-0003-100000000000") }
+            .filter { it.inputId == config.waterDepthInputId && it.index == config.waterDepthIndex }
             .filter { it.value is TypedValue.Percent }
             .startWith(
                 // TODO: use latest value from db before restart
@@ -47,12 +52,14 @@ class WateringController(
                 // stream needs at least one value to start
                 // otherwise will not start if rebooted and tank sensor doesn't work
                 // fake input event set to yesterday. will be disregarded as too old
-                Observable.just(Input.InputEvent(
-                    UUID.fromString("00000000-0000-0000-0003-100000000000"),
-                    null,
-                    Instant.now().minus(1, ChronoUnit.DAYS),
-                    TypedValue.Percent(1f)
-                ))
+                Observable.just(
+                    Input.InputEvent(
+                        config.waterDepthInputId,
+                        config.waterDepthIndex,
+                        Instant.now().minus(1, ChronoUnit.DAYS),
+                        TypedValue.Percent(1f)
+                    )
+                )
             )
 
 
@@ -79,20 +86,23 @@ class WateringController(
             }
     }
 
-    private fun getWateringDurationMillis(percentRemaining: Input.InputEvent): Long {
-        // only use percent remaining if there is recent values
-        return if (percentRemaining.time.isAfter(Instant.now().minus(6, ChronoUnit.HOURS))) {
-            // check how low water is
-            val percent = (percentRemaining.value as TypedValue.Percent).value
-            // TODO: make 15% configurable
-            if (percent < 0.15f) {
-                // TODO: make 60% configurable
-                // use 60% water when less than 15% remaining
-                (config.durationMillis * 0.6f).toLong()
+    private fun getWateringDurationMillis(reservoirPercentEvent: Input.InputEvent): Long {
+        // only use reservoir percent if there is a recent value
+        return if (reservoirPercentEvent.time.isAfter(Instant.now().minus(6, ChronoUnit.HOURS))) {
+            val reservoirPercent = (reservoirPercentEvent.value as TypedValue.Percent).value
+            val conserveWaterReservoirPercent = config.conserveWaterReservoirPercent.also { TypedValue.Percent(it) }
+            val conserveWaterUsagePercent =
+                config.conserveWaterUsagePercent.also { TypedValue.Percent(it) } // validate percent too
+            if (reservoirPercent < conserveWaterReservoirPercent) {
+                // if: conserveWaterReservoirPercent = 0.15
+                // if: conserveWaterUsagePercent = 0.6
+                // then: when less than 15% remaining in tank only use 60% watering duration
+                (config.durationMillis * conserveWaterUsagePercent).toLong()
             } else {
                 config.durationMillis
             }
         } else {
+            logger.warn("Reservoir depth value too old for conserve water check, using default behavior", null)
             // disregard depth and use normal
             config.durationMillis
         }
