@@ -152,6 +152,15 @@ object DI {
             index = null
         )
         scheduler.schedule(drainPumpSchedule)
+
+        val exhaustFanSchedule = ScheduleItem(
+            id = UUID.fromString("00000000-0000-0000-0004-500000000000"),
+            data = TypedValue.Bool(true),
+            startTime = Instant.now(),
+            endTime = null,
+            index = null
+        )
+        scheduler.schedule(exhaustFanSchedule)
     }
 
     private fun UUID.getConfigurable(): Configurable {

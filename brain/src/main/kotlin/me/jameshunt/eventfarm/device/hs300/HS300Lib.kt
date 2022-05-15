@@ -31,13 +31,7 @@ class HS300Lib(
     fun setState(ip: String, index: Int, on: Boolean) {
         val state = if (on) 1 else 0
         val setState = """{"context":{"child_ids":["$idPrefix$index"]},"system":{"set_relay_state":{"state":$state}}}"""
-
-        // TODO: uncomment
-//        setState.executeJsonCommand(ip)
-        when (index) {
-            4 -> println("plug with index: $index is disabled")
-            0, 1, 2, 3, 5 -> setState.executeJsonCommand(ip)
-        }
+        setState.executeJsonCommand(ip)
     }
 
     fun getCurrentState(ip: String): SystemInfo {
