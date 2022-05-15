@@ -72,7 +72,8 @@ class MQTTManager(private val logger: Logger) {
     }
 
     private fun createClient(): MqttClient {
-        return MqttClient("tcp://localhost:1883", "brain", MemoryPersistence()).apply {
+        // TODO: parametrize ip, env variable?
+        return MqttClient("tcp://192.168.1.83:1883", "brain", MemoryPersistence()).apply {
             setCallback(object : MqttCallback {
                 override fun connectionLost(cause: Throwable) {
                     logger.warn("mqtt client disconnected from broker", cause)
@@ -96,6 +97,9 @@ class MQTTManager(private val logger: Logger) {
     }
 
     private fun startMQTTBroker() {
+        // TODO: do this if ip of broker is the local ip of this computer
+        return
+
         // TODO: docker requires sudo on raspberry pi, started manually for now
         val downloadImageCmd = "docker pull eclipse-mosquitto:2.0.14"
         val startMQTTBrokerCmd =

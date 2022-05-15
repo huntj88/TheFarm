@@ -2,7 +2,9 @@ package me.jameshunt.eventfarm.core
 
 import io.reactivex.rxjava3.core.Observable
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 sealed class TypedValue {
     object None : TypedValue()
@@ -47,6 +49,43 @@ sealed class TypedValue {
     data class Watt(val value: Float) : TypedValue()
     data class Bool(val value: Boolean) : TypedValue()
     data class Error(val err: Throwable) : TypedValue()
+}
+
+/**
+ *  Widest scope possible should be used for [T].
+ *  [TypedValue.Pressure] is preferred over [TypedValue.Pressure.Pascal]
+ *  [TypedValue.Temperature] is preferred over [TypedValue.Temperature.Celsius]
+ *
+ *  inputEventManager.waitForValueOrDefaultThenInterval<TypedValue.Temperature>(
+ *      default = TypedValue.Temperature.Celsius(100)
+ *      ...
+ *  )
+ **/
+inline fun <reified T : TypedValue> IInputEventManager.waitForValueOrDefaultThenInterval(
+    periodMillis: Long,
+    inputId: UUID,
+    inputIndex: Int?,
+    default: T
+): Observable<Input.InputEvent> {
+    val inputValues = this.getEventStream()
+        .filter { it.inputId == inputId && it.index == inputIndex && it.value is T }
+        .startWith(
+            // stream needs at least one value to start
+            // otherwise will not start if rebooted and input sensor doesn't work
+            // fake input event set to a year ago. will be disregarded as too old, or replaced by new data
+            Observable.just(
+                Input.InputEvent(inputId, inputIndex, Instant.now().minus(365, ChronoUnit.DAYS), default)
+            )
+        )
+
+    // collect values for a minute after startup, and then start the interval
+    // throwing away fake input or old db input in favor of recent data if there is any
+    return inputValues
+        .take(1, TimeUnit.MINUTES)
+        .takeLast(1).map { Unit } // ensures interval only started once, and that the full minute is waited
+        .switchIfEmpty { Observable.just(Unit) } // ensures the interval is started
+        .flatMap { Observable.interval(0, periodMillis, TimeUnit.MILLISECONDS) }
+        .withLatestFrom(inputValues) { _, inputEvent -> inputEvent }
 }
 
 interface Configurable {
