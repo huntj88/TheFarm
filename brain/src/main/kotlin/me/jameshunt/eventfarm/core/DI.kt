@@ -25,7 +25,8 @@ import java.util.*
 //  Camera would need to be an input with Input.InputEvent(data=TypedValue.Image(imgId)) if you wanted a record that could be used internally
 //  otherwise, camera would just be an output, an action that can be scheduled (more like this at the moment with the way the android app works
 //  ensure camera reset on camera app
-// TODO: arduino connect to multiple mqtt servers (pi and develop)?
+// TODO: if esp8266's cannot connect to the wifi, esp8266 broadcast wifi with password, allow raspberry pi or dev computer to reach out to esp8266 and configure it
+//  (provide it wifi ssid, wifi password, and mqtt broker ip)
 
 // TODO: can i re-instantiate an input when it errors due to subject already being disposed?
 
