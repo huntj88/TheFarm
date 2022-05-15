@@ -3,6 +3,7 @@ package me.jameshunt.eventfarm.core
 val configJson = listOf(
     """{"id":"00000000-0000-0000-0000-000000000003","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}Inputs${'$'}Config","name":"On/Off Status, and power usage metrics","ip":"192.168.1.82"}""",
     """{"id":"00000000-0000-0000-0000-000000000102","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}OnOffOutput${'$'}Config","name":"turn plug on or off at a position","ip":"192.168.1.82"}""",
+    """{"id":"00000000-0000-0000-0000-000000000103","className":"me.jameshunt.eventfarm.device.AndroidCamera${'$'}Config","name":"Android Camera"}""",
     """{"id":"00000000-0000-0000-0000-000000000005","className":"me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHum${'$'}Config","name":"temp and humidity sensor","mqttTopic":"ezoHum"}""",
 //    """{"id":"00000000-0000-0000-0003-000000000000","className":"me.jameshunt.eventfarm.device.DepthSensorInput${'$'}Config","name":"returns distance water is from the sensor, and a percent remaining based on the config depth ","depthOfTankCentimeters":"32.0","depthWhenFullCentimeters":4.0}""", // 32 is distance from water still covering the pump intake
     """{"id":"00000000-0000-0000-0003-100000000000","className":"me.jameshunt.eventfarm.device.DepthSensorInputMQTT${'$'}Config","name":"returns distance water is from the sensor, and a percent remaining based on the config depth ","depthOfTankCentimeters":"32.0","depthWhenFullCentimeters":4.0,"mqttTopic":"humidifierTankDepthSensor"}""", // 32 is distance from water still covering the pump intake

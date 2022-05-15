@@ -59,7 +59,7 @@ class HS300 private constructor() {
             val name: String,
             val ip: String,
             val numPlugs: Int = 6,
-            val stateUpdateIntervalSeconds: Int = 10,
+            val stateUpdateIntervalSeconds: Int = 20,
             val eMeterUpdateIntervalSeconds: Int = 120
 //        val idPrefix: String // TODO?
         ) : Configurable.Config

@@ -9,15 +9,13 @@ import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
 import me.jameshunt.eventfarm.customcontroller.MyLightingController
 import me.jameshunt.eventfarm.customcontroller.PressurePumpController
 import me.jameshunt.eventfarm.customcontroller.WateringController
+import me.jameshunt.eventfarm.device.AndroidCamera
 import me.jameshunt.eventfarm.vpd.VPDController
+import me.jameshunt.thefarm.exec
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
 import java.util.*
-
-fun main() {
-    DI
-}
 
 // TODO: controller for alerts when tank is getting empty
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
@@ -28,6 +26,7 @@ fun main() {
 //  Camera would need to be an input with Input.InputEvent(data=TypedValue.Image(imgId)) if you wanted a record that could be used internally
 //  otherwise, camera would just be an output, an action that can be scheduled (more like this at the moment with the way the android app works
 //  ensure camera reset on camera app
+// TODO: arduino connect to multiple mqtt servers (pi and develop)?
 
 // TODO: can i re-instantiate an input when it errors due to subject already being disposed?
 
@@ -38,6 +37,16 @@ object DI {
             it.mkdir()
         }
     }
+
+    init {
+        val cliDirectory: File = File(libDirectory, "tplink-smartplug")
+        if (!cliDirectory.exists()) {
+            DefaultLogger("CLI installer").debug("installing tplink-smartplug")
+            // https so no auth required
+            "git clone https://github.com/huntj88/tplink-smartplug.git".exec(libDirectory)
+        }
+    }
+
     val moshi = Moshi.Builder()
         .add(object {
             @FromJson
@@ -125,6 +134,15 @@ object DI {
             index = null
         )
         scheduler.schedule(pressurePumpControllerSchedule)
+
+        val cameraOutputManualSchedule = ScheduleItem(
+            id = configurable.first { it is AndroidCamera }.config.id,
+            data = TypedValue.None,
+            startTime = Instant.now(),
+            endTime = null,
+            index = null
+        )
+        scheduler.schedule(cameraOutputManualSchedule)
     }
 
     private fun UUID.getConfigurable(): Configurable {
