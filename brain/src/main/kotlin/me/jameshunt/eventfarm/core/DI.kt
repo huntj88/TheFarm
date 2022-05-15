@@ -9,7 +9,6 @@ import me.jameshunt.eventfarm.core.Scheduler.ScheduleItem
 import me.jameshunt.eventfarm.customcontroller.MyLightingController
 import me.jameshunt.eventfarm.customcontroller.PressurePumpController
 import me.jameshunt.eventfarm.customcontroller.WateringController
-import me.jameshunt.eventfarm.device.AndroidCamera
 import me.jameshunt.eventfarm.vpd.VPDController
 import me.jameshunt.thefarm.exec
 import java.io.File
@@ -135,14 +134,23 @@ object DI {
         )
         scheduler.schedule(pressurePumpControllerSchedule)
 
-        val cameraOutputManualSchedule = ScheduleItem(
-            id = configurable.first { it is AndroidCamera }.config.id,
+        val cameraSchedule = ScheduleItem(
+            id = UUID.fromString("00000000-0000-0000-0004-300000000000"),
             data = TypedValue.None,
             startTime = Instant.now(),
             endTime = null,
             index = null
         )
-        scheduler.schedule(cameraOutputManualSchedule)
+        scheduler.schedule(cameraSchedule)
+
+        val drainPumpSchedule = ScheduleItem(
+            id = UUID.fromString("00000000-0000-0000-0004-400000000000"),
+            data = TypedValue.Bool(true),
+            startTime = Instant.now(),
+            endTime = null,
+            index = null
+        )
+        scheduler.schedule(drainPumpSchedule)
     }
 
     private fun UUID.getConfigurable(): Configurable {
