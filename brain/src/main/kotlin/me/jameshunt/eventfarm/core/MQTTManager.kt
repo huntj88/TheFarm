@@ -96,6 +96,7 @@ class MQTTManager(private val logger: Logger) {
     }
 
     private fun startMQTTBroker() {
+        // TODO: docker requires sudo on raspberry pi, started manually for now
         val downloadImageCmd = "docker pull eclipse-mosquitto:2.0.14"
         val startMQTTBrokerCmd =
             "docker run -itd -p 1883:1883 eclipse-mosquitto:2.0.14 mosquitto -c /mosquitto-no-auth.conf"

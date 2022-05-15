@@ -3,7 +3,8 @@
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
 
-#define MQTT_SERVER      "192.168.1.196"
+//#define MQTT_SERVER      "192.168.1.196"
+#define MQTT_SERVER      "192.168.1.83"
 #define MQTT_SERVERPORT  1883                   // use 8883 for SSL
 
 int trig = 4; // Attach Trig of ultrasonic sensor to pin D2
