@@ -30,6 +30,7 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             .filter { it.value is TypedValue.Percent }
 
         return Observable.combineLatest(tempStream, humidityStream) { t, h ->
+            // TODO: filter out old values? example: new temp, super old humidity value
             val temperature = (t.value as TypedValue.Temperature).asCelsius()
             val humidity = (h.value as TypedValue.Percent)
 

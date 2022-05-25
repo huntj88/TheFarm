@@ -78,6 +78,8 @@ class WateringController(
         val conserveWaterReservoirPercent = config.conserveWaterReservoirPercent.withPercentValidation()
         val conserveWaterUsagePercent = config.conserveWaterUsagePercent.withPercentValidation()
         return if (reservoirPercent < conserveWaterReservoirPercent) {
+            val formattedPercent = "${reservoirPercent * 100f}".takeLast(5)
+            logger.warn("Reservoir depth at $formattedPercent, Conserving water", null)
             // if: conserveWaterReservoirPercent = 0.15
             // if: conserveWaterUsagePercent = 0.6
             // then: when less than 15% remaining in tank only use 60% watering duration

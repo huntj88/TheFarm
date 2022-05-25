@@ -55,34 +55,36 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
     fun schedule(item: ScheduleItem) {
         val schedulable = getSchedulable(item.id)
 
-        val disposable = streamListeners[item.id]
-        if (disposable == null || disposable.isDisposed) {
-            streamListeners[item.id] = schedulable.listenForSchedule(scheduleStreamFor(schedulable.config.id))
-        }
-        synchronized(waiting) {
+        synchronized(this) {
+            val disposable = streamListeners[item.id]
+            if (disposable == null || disposable.isDisposed) {
+                streamListeners[item.id] = schedulable.listenForSchedule(scheduleStreamFor(schedulable.config.id))
+            }
             waiting.add(ScheduleWrapper(schedulable, item))
         }
     }
 
     private fun loop() = Executors.newSingleThreadExecutor().submit {
         while (true) {
-            val now = Instant.now()
-            waiting.sortBy { it.scheduleItem.startTime }
-            val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
-            waiting.removeAll(starting)
-            starting.forEach {
-                loggerFactory.create(it.schedulable.config).trace("Starting: ${it.scheduleItem}")
-                scheduleStream.onNext(it.scheduleItem)
-            }
+            synchronized(this) {
+                val now = Instant.now()
+                waiting.sortBy { it.scheduleItem.startTime }
+                val starting = waiting.takeWhile { it.scheduleItem.startTime <= now }
+                waiting.removeAll(starting)
+                starting.forEach {
+                    loggerFactory.create(it.schedulable.config).trace("Starting: ${it.scheduleItem}")
+                    scheduleStream.onNext(it.scheduleItem)
+                }
 
-            val hasEnd = starting.filter { it.scheduleItem.endTime != null }
-            running.addAll(hasEnd)
-            running.sortBy { it.scheduleItem.endTime!! }
-            val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
-            running.removeAll(ending)
-            ending.forEach {
-                loggerFactory.create(it.schedulable.config).trace("Ending: ${it.scheduleItem}")
-                scheduleStream.onNext(it.scheduleItem)
+                val hasEnd = starting.filter { it.scheduleItem.endTime != null }
+                running.addAll(hasEnd)
+                running.sortBy { it.scheduleItem.endTime!! }
+                val ending = running.takeWhile { it.scheduleItem.endTime!! <= now }
+                running.removeAll(ending)
+                ending.forEach {
+                    loggerFactory.create(it.schedulable.config).trace("Ending: ${it.scheduleItem}")
+                    scheduleStream.onNext(it.scheduleItem)
+                }
             }
 
             Thread.sleep(50)

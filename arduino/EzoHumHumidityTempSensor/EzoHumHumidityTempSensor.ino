@@ -36,6 +36,8 @@ void setup() {
 
   Serial.println("WiFi connected");
   Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  WiFi.setAutoReconnect(true); // TODO: duplicate to other sensors
+  WiFi.persistent(true); // TODO: duplicate to other sensors
 
   mySUART.begin(9600);
 
