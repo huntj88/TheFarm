@@ -9,7 +9,6 @@
 #define MQTT_SERVER      "192.168.1.83"
 #define MQTT_SERVERPORT  1883
 
-
 SoftwareSerial mySUART(4, 5);  //D2, D1 = SRX, STX
 Ezo_uart sensor(mySUART);
 WiFiClient client;
@@ -21,6 +20,8 @@ char responseData[bufferLength];
 
 void setup() {
   Serial.begin(9600);
+
+  delay(1000);
   
   // Connect to WiFi access point.
   Serial.println(); Serial.println();
@@ -29,7 +30,7 @@ void setup() {
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(2000);
     Serial.print(".");
   }
   Serial.println();

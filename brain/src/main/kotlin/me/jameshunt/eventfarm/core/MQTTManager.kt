@@ -64,7 +64,7 @@ class MQTTManager(private val logger: Logger) {
                 subscribedTopics.remove(topic)
                 client.unsubscribe(topic)
             }
-            .observeOn(Schedulers.io())
+            .observeOn(Schedulers.io()) // TODO: computation?
     }
 
     fun sendCommand(topic: String, data: String): Completable {
@@ -79,7 +79,6 @@ class MQTTManager(private val logger: Logger) {
                     logger.warn("mqtt client disconnected from broker", cause)
                 }
 
-                @Throws(Exception::class)
                 override fun messageArrived(topic: String, message: MqttMessage) {
                     incomingMessages.onNext(TopicPayload(topic, message))
                 }
@@ -97,10 +96,6 @@ class MQTTManager(private val logger: Logger) {
     }
 
     private fun startMQTTBroker() {
-        // TODO: do this if ip of broker is the local ip of this computer
-        return
-
-        // TODO: docker requires sudo on raspberry pi, started manually for now
         val downloadImageCmd = "docker pull eclipse-mosquitto:2.0.14"
         val startMQTTBrokerCmd =
             "docker run -itd -p 1883:1883 eclipse-mosquitto:2.0.14 mosquitto -c /mosquitto-no-auth.conf"

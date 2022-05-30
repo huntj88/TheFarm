@@ -2,7 +2,6 @@ package me.jameshunt.eventfarm.core
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.kotlin.toCompletable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.time.Instant
@@ -44,12 +43,6 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
 
     init {
         loop()
-            .toCompletable()
-            .subscribeOn(Schedulers.io())
-            .subscribe(
-                { throw IllegalStateException("should never complete") },
-                { throw it }
-            )
     }
 
     fun schedule(item: ScheduleItem) {
@@ -64,7 +57,7 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
         }
     }
 
-    private fun loop() = Executors.newSingleThreadExecutor().submit {
+    private fun loop() = Executors.newSingleThreadExecutor().execute {
         while (true) {
             synchronized(this) {
                 val now = Instant.now()
@@ -91,10 +84,6 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
             // todo: check elapsed time to ensure scheduling thread is never blocked unless flag set or something for debugging
         }
     }
-//        .toCompletable().subscribe(
-//        { throw IllegalStateException("should not ever complete") },
-//        { throw it }
-//    )
 
     private fun scheduleStreamFor(id: UUID): Observable<ScheduleItem> {
         return scheduleStream.filter { it.id == id }.subscribeOn(Schedulers.io())
