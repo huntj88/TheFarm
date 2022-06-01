@@ -1,7 +1,7 @@
 package me.jameshunt.eventfarm.device.hs300
 
 import com.squareup.moshi.Moshi
-import me.jameshunt.thefarm.exec
+import me.jameshunt.eventfarm.core.exec
 import java.io.File
 
 class HS300Lib(

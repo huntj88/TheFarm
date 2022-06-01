@@ -5,7 +5,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Logger
 import me.jameshunt.eventfarm.core.Scheduler
-import me.jameshunt.thefarm.exec
+import me.jameshunt.eventfarm.core.exec
 import java.util.*
 
 class AndroidCamera(

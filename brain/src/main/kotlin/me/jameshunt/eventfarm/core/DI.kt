@@ -10,7 +10,6 @@ import me.jameshunt.eventfarm.customcontroller.MyLightingController
 import me.jameshunt.eventfarm.customcontroller.PressurePumpController
 import me.jameshunt.eventfarm.customcontroller.WateringController
 import me.jameshunt.eventfarm.vpd.VPDController
-import me.jameshunt.thefarm.exec
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
@@ -39,6 +38,8 @@ object DI {
     }
 
     init {
+        // TODO: install adb automatically
+        // TODO: better place for this?
         val cliDirectory: File = File(libDirectory, "tplink-smartplug")
         if (!cliDirectory.exists()) {
             DefaultLogger("CLI installer").debug("installing tplink-smartplug")

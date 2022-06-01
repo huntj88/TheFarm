@@ -4,12 +4,9 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
-import me.jameshunt.thefarm.exec
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KProperty0
-import kotlin.reflect.jvm.isAccessible
 
 // TODO: security for mqtt, but starting with plaintext
 class MQTTManager(private val logger: Logger) {
@@ -117,21 +114,3 @@ class MQTTManager(private val logger: Logger) {
         }
     }
 }
-
-
-/**
- * Returns true if a lazy property reference has been initialized, or if the property is not lazy.
- */
-// TODO: util file?
-val KProperty0<*>.isLazyInitialized: Boolean
-    get() {
-        if (this !is Lazy<*>) return true
-
-        // Prevent IllegalAccessException from JVM access check on private properties.
-        val originalAccessLevel = isAccessible
-        isAccessible = true
-        val isLazyInitialized = (getDelegate() as Lazy<*>).isInitialized()
-        // Reset access level.
-        isAccessible = originalAccessLevel
-        return isLazyInitialized
-    }

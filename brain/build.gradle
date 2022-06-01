@@ -1,46 +1,26 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.squareup.sqldelight:gradle-plugin:1.5.3'
-    }
-}
-
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.31'
     id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
-apply plugin: 'com.squareup.sqldelight'
-
 group 'me.jameshunt'
 version '1.0-SNAPSHOT'
-
-sqldelight {
-    Database { // This will be the name of the generated database class.
-        packageName = "me.jameshunt.brain.sql"
-    }
-}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.5.31'
-    implementation "com.squareup.moshi:moshi-kotlin:1.12.0"
-    implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0"
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.6.21'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.6.21'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.13.0'
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
 
     // https://lukealderton.com/blog/posts/2016/javalangunsatisfiedlinkerror-no-rxtxserial-in-javalibrarypath/
     implementation 'org.rxtx:rxtx:2.1.7' // TODO: remove if serial depth sensor is removed
 
-    implementation "com.squareup.sqldelight:sqlite-driver:1.5.3"
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
-    implementation "com.squareup.sqldelight:rxjava3-extensions:1.5.1"
-    implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 }
 
 // ② Config the shadow jar, its name is baseName-1.0-classifier.jar
