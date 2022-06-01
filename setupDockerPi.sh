@@ -5,6 +5,3 @@ echo "adding group"
 groupadd docker || true
 echo "adding current user to group"
 usermod -aG docker $USER || true
-echo "refreshing group evaluation"
-newgrp docker
-echo "exiting"

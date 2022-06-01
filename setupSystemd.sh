@@ -1,6 +1,6 @@
 #!/bin/bash
-# Create new system service file and enable it
 
+echo "Creating new systemd service"
 cat > /lib/systemd/system/thefarm.service <<- EOM
 [Unit]
 Description=Farming software
@@ -19,4 +19,5 @@ KillMode=control-group
 WantedBy=multi-user.target
 EOM
 
+echo "Enabling new systemd service"
 systemctl enable thefarm
