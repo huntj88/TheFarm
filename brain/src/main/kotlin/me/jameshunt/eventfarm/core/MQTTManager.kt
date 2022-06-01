@@ -64,7 +64,7 @@ class MQTTManager(private val logger: Logger) {
                 subscribedTopics.remove(topic)
                 client.unsubscribe(topic)
             }
-            .observeOn(Schedulers.computation())
+            .observeOn(Schedulers.io())
     }
 
     fun sendCommand(topic: String, data: String): Completable {
