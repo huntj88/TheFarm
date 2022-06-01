@@ -1,3 +1,4 @@
+#!/bin/bash
 # run with sudo
 # create docker group so we don't need to use sudo in the future
 echo "adding group"
