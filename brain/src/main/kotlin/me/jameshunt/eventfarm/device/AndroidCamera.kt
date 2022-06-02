@@ -6,12 +6,13 @@ import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Logger
 import me.jameshunt.eventfarm.core.Scheduler
 import me.jameshunt.eventfarm.core.exec
+import java.io.Closeable
 import java.util.*
 
 class AndroidCamera(
     override val config: Config,
     private val logger: Logger
-) : Scheduler.Schedulable { // TODO mqtt input
+) : Scheduler.Schedulable, Closeable { // TODO mqtt input
     data class Config(
         override val id: UUID,
         override val className: String = Config::class.java.name,
@@ -29,8 +30,13 @@ class AndroidCamera(
     override fun listenForSchedule(onSchedule: Observable<Scheduler.ScheduleItem>): Disposable {
         return onSchedule.doOnNext {
             if (it.isStarting) {
+                // TODO: if errors out, check if adb is starting, and try again
                 "bash takePicture.sh".exec()
             }
         }.subscribe({}, { logger.error("could not schedule picture", it) })
+    }
+
+    override fun close() {
+        "adb kill-server".exec()
     }
 }

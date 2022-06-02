@@ -6,10 +6,11 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
 // TODO: security for mqtt, but starting with plaintext
-class MQTTManager(private val logger: Logger) {
+class MQTTManager(private val logger: Logger) : Closeable {
     data class TopicPayload(val topic: String, val payload: MqttMessage)
 
     private val incomingMessages = PublishSubject.create<TopicPayload>()
@@ -24,32 +25,30 @@ class MQTTManager(private val logger: Logger) {
         createClient()
     }
 
-    init {
-        // TODO: set up persistence on broker and brain client. Delete reconnect resubscribe logic below
-        //  (set isCleanSession=false, autoReconnect=true after)
-        Observable.interval(30, TimeUnit.SECONDS)
-            .filter { this::client.isLazyInitialized }
-            .map { client.isConnected }
-            .doOnNext { isConnected ->
-                if (!isConnected) {
-                    logger.debug("mqtt client reconnecting to broker")
-                    client.reconnect()
-                }
+    // TODO: set up persistence on broker and brain client. Delete reconnect resubscribe logic below
+    //  (set isCleanSession=false, autoReconnect=true after)
+    private val reconnectDisposable = Observable.interval(30, TimeUnit.SECONDS)
+        .filter { this::client.isLazyInitialized }
+        .map { client.isConnected }
+        .doOnNext { isConnected ->
+            if (!isConnected) {
+                logger.debug("mqtt client reconnecting to broker")
+                client.reconnect()
             }
-            .delay(5, TimeUnit.SECONDS)
-            .map { wasConnected -> wasConnected to client.isConnected }
-            .doOnNext { (wasConnected, isConnected) ->
-                if (!wasConnected && isConnected) {
-                    logger.debug("mqtt client reconnected to broker")
-                    subscribedTopics.forEach { client.subscribe(it) }
-                }
+        }
+        .delay(5, TimeUnit.SECONDS)
+        .map { wasConnected -> wasConnected to client.isConnected }
+        .doOnNext { (wasConnected, isConnected) ->
+            if (!wasConnected && isConnected) {
+                logger.debug("mqtt client reconnected to broker")
+                subscribedTopics.forEach { client.subscribe(it) }
+            }
 
-                if (!wasConnected && !isConnected) {
-                    startMQTTBroker()
-                }
+            if (!wasConnected && !isConnected) {
+                startMQTTBroker()
             }
-            .subscribe()
-    }
+        }
+        .subscribe()
 
     fun listen(topic: String): Observable<MqttMessage> {
         subscribedTopics.add(topic)
@@ -66,6 +65,13 @@ class MQTTManager(private val logger: Logger) {
 
     fun sendCommand(topic: String, data: String): Completable {
         TODO()
+    }
+
+    override fun close() {
+        logger.debug("stopping mqtt broker")
+        reconnectDisposable.dispose()
+        client.close(true)
+        stopMQTTBroker()
     }
 
     private fun createClient(): MqttClient {
@@ -112,5 +118,24 @@ class MQTTManager(private val logger: Logger) {
             // TODO: more detailed error messages
             logger.warn("could not start or MQTT broker already started", e)
         }
+    }
+
+    private fun stopMQTTBroker() {
+        // String.exec() extension not working here
+        val process = ProcessBuilder(
+            "/bin/bash", "-c",
+            "docker ps -q --filter ancestor=eclipse-mosquitto:2.0.14 | xargs docker stop"
+        ).start().also { it.waitFor(20, TimeUnit.SECONDS) }
+
+        try {
+            process.exitValue()
+        } catch (e: IllegalThreadStateException) {
+            throw Exception("command timed out", e)
+        }
+
+        if (process.exitValue() != 0) {
+            throw Exception(process.errorStream.bufferedReader().readText())
+        }
+        println(process.inputStream.bufferedReader().readText().trim())
     }
 }
