@@ -5,6 +5,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.toObservable
 import me.jameshunt.eventfarm.core.*
+import java.io.Closeable
 import java.io.File
 import java.time.Instant
 import java.util.*
@@ -16,7 +17,7 @@ class HS300(
     moshi: Moshi,
     override val config: Config,
     private val logger: Logger
-) : Input, Scheduler.Schedulable {
+) : Input, Scheduler.Schedulable, Closeable {
     data class Config(
         override val id: UUID,
         override val className: String = Config::class.java.name,
@@ -45,6 +46,14 @@ class HS300(
                 it.isEnding -> setState(!requestedState, index)
             }
         }, { logger.error("could not set plug state", it) })
+    }
+
+    init {
+        // TODO: set plugs to assigned state when program is starting up
+    }
+
+    override fun close() {
+        // TODO: set plugs to assigned state when program is shutting down
     }
 
     private fun setState(on: Boolean, index: Int) {
