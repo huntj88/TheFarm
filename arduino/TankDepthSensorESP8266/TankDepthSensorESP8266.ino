@@ -17,6 +17,8 @@ Adafruit_MQTT_Publish publishTopic = Adafruit_MQTT_Publish(&mqtt, "humidifierTan
 void setup() {
   Serial.begin(9600);
 
+  delay(1000);
+
   // Connect to WiFi access point.
   Serial.println(); Serial.println();
   Serial.print("Connecting to ");
@@ -24,13 +26,15 @@ void setup() {
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(2000);
     Serial.print(".");
   }
   Serial.println();
 
   Serial.println("WiFi connected");
   Serial.println("IP address: "); Serial.println(WiFi.localIP());
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 
 }
 
