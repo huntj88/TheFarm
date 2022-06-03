@@ -70,7 +70,6 @@ class MQTTManager(private val logger: Logger) : Closeable {
     override fun close() {
         logger.debug("stopping mqtt broker")
         reconnectDisposable.dispose()
-        client.close(true)
         stopMQTTBroker()
     }
 
@@ -121,7 +120,7 @@ class MQTTManager(private val logger: Logger) : Closeable {
     }
 
     private fun stopMQTTBroker() {
-        // String.exec() extension not working here
+        // TODO: String.exec() extension not working here, Fix?
         val process = ProcessBuilder(
             "/bin/bash", "-c",
             "docker ps -q --filter ancestor=eclipse-mosquitto:2.0.14 | xargs docker stop"

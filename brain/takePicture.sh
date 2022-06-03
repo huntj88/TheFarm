@@ -1,3 +1,4 @@
+#!/bin/bash
 adb start-server &&
 adb shell input keyevent 26 &&
 adb shell input touchscreen swipe 930 880 930 380 &&

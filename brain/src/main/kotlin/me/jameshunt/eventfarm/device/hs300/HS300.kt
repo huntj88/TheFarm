@@ -11,7 +11,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-// TODO: set up default plug states for startup and shutdown
+// TODO: set up default plug states for startup?
 class HS300(
     libDirectory: File,
     moshi: Moshi,
@@ -25,7 +25,8 @@ class HS300(
         val ip: String,
         val numPlugs: Int = 6,
         val stateUpdateIntervalSeconds: Int = 20, // TODO: move to json
-        val eMeterUpdateIntervalSeconds: Int = 120
+        val eMeterUpdateIntervalSeconds: Int = 120,
+        val shutdownState: String = "0,0,0,0,0,0" // 0 for off, 1 for on
 //        val idPrefix: String // TODO?
     ) : Configurable.Config
 
@@ -48,12 +49,13 @@ class HS300(
         }, { logger.error("could not set plug state", it) })
     }
 
-    init {
-        // TODO: set plugs to assigned state when program is starting up
-    }
-
     override fun close() {
-        // TODO: set plugs to assigned state when program is shutting down
+        logger.debug("setting hs300 shutdown state")
+        // set plugs to assigned state when program is shutting down
+        config.shutdownState
+            .split(",")
+            .map { it == "1" }
+            .forEachIndexed { i, on -> hS300Lib.setState(config.ip, index = i, on) }
     }
 
     private fun setState(on: Boolean, index: Int) {

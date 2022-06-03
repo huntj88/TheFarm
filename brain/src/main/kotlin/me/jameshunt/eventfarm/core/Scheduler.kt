@@ -4,13 +4,19 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
+import java.io.Closeable
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 // TODO: persist scheduled stuff to sqlite? resume a schedule when rebooted?
 //  like putting H2O2 in the water 3 days after the last time. controller scheduling the h2o2 could check the last time it was scheduled for after reboot?
-class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedulable: (UUID) -> Schedulable) {
+class Scheduler(
+    private val logger: Logger,
+    private val loggerFactory: LoggerFactory,
+    private val getSchedulable: (UUID) -> Schedulable
+) : Closeable {
     data class ScheduleItem(
         val id: UUID,
         /** If a [Configurable] has multiple inputs or outputs, outputs, index refers to a specific input or output */
@@ -35,11 +41,16 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
         val scheduleItem: ScheduleItem
     )
 
+    private val executor = Executors.newSingleThreadExecutor()
+
     private val waiting: LinkedList<ScheduleWrapper> = LinkedList()
     private val running: LinkedList<ScheduleWrapper> = LinkedList()
 
     private val scheduleStream = PublishSubject.create<ScheduleItem>()
     private val streamListeners = mutableMapOf<UUID, Disposable>()
+
+    @Volatile
+    private var keepRunning = true
 
     init {
         loop()
@@ -57,8 +68,14 @@ class Scheduler(private val loggerFactory: LoggerFactory, private val getSchedul
         }
     }
 
-    private fun loop() = Executors.newSingleThreadExecutor().execute {
-        while (true) {
+    override fun close() {
+        logger.debug("shutting down scheduler")
+        keepRunning = false
+        executor.awaitTermination(5, TimeUnit.SECONDS)
+    }
+
+    private fun loop() = executor.execute {
+        while (keepRunning) {
             synchronized(this) {
                 val now = Instant.now()
                 waiting.sortBy { it.scheduleItem.startTime }

@@ -3,10 +3,11 @@ package me.jameshunt.eventfarm.core
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.subjects.PublishSubject
+import java.io.Closeable
 import java.time.Instant
 import java.util.*
 
-interface IInputEventManager {
+interface IInputEventManager : Closeable {
     fun getEventStream(): Observable<Input.InputEvent>
 }
 
@@ -28,6 +29,10 @@ class InputEventManager(
                     { throw it }
                 )
         }
+    }
+
+    override fun close() {
+        streamListeners.forEach { (_, disposable) -> disposable.dispose() }
     }
 
     private fun Input.getInputEventsErrorResume(): Observable<Input.InputEvent> {

@@ -68,7 +68,7 @@ object DI {
     val loggerFactory = LoggerFactory()
     val inputEventManager: InputEventManager = InputEventManager(loggerFactory) { it.getConfigurable() }
 
-    val scheduler: Scheduler = Scheduler(loggerFactory) { findId ->
+    val scheduler: Scheduler = Scheduler(DefaultLogger(Scheduler::class.java.name), loggerFactory) { findId ->
         val configurable = findId.getConfigurable()
         configurable as? Schedulable ?: throw IllegalArgumentException("configurable is not schedulable: $configurable")
     }
