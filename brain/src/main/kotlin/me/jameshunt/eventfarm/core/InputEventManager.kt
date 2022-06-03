@@ -7,14 +7,14 @@ import java.io.Closeable
 import java.time.Instant
 import java.util.*
 
-interface IInputEventManager : Closeable {
+interface IInputEventManager {
     fun getEventStream(): Observable<Input.InputEvent>
 }
 
 class InputEventManager(
     private val loggerFactory: LoggerFactory,
     private val getConfigurable: (UUID) -> Configurable
-) : IInputEventManager {
+) : IInputEventManager, Closeable {
     private val streamListeners = mutableMapOf<UUID, Disposable>()
     private val eventStream = PublishSubject.create<Input.InputEvent>()
 
