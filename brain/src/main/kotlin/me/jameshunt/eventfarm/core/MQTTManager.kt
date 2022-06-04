@@ -71,6 +71,7 @@ class MQTTManager(private val logger: Logger) : Closeable {
         logger.debug("stopping mqtt broker")
         reconnectDisposable.dispose()
         stopMQTTBroker()
+        incomingMessages.onComplete()
     }
 
     private fun createClient(): MqttClient {
@@ -104,7 +105,7 @@ class MQTTManager(private val logger: Logger) : Closeable {
 
         try {
             logger.debug("downloading MQTT message broker docker image")
-            downloadImageCmd.exec()
+            downloadImageCmd.exec(timeoutSeconds = 40)
         } catch (e: Exception) {
             // TODO: handle docker not being installed? docker install script?
             logger.error("could not download docker image, is docker installed?", e)

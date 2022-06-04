@@ -71,11 +71,13 @@ class Scheduler(
     override fun close() {
         logger.debug("shutting down scheduler")
         keepRunning = false
-        executor.awaitTermination(5, TimeUnit.SECONDS)
+        executor.awaitTermination(10, TimeUnit.SECONDS)
+        streamListeners.forEach { (_, disposable) -> disposable.dispose() }
+        scheduleStream.onComplete()
     }
 
     private fun loop() = executor.execute {
-        while (keepRunning) {
+        while (true) {
             synchronized(this) {
                 val now = Instant.now()
                 waiting.sortBy { it.scheduleItem.startTime }

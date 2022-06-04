@@ -20,6 +20,11 @@ class AndroidCamera(
 //        val mqttTopic: String,
     ) : Configurable.Config
 
+    init {
+        logger.debug("Starting ADB")
+        "adb start-server".exec()
+    }
+
 //    override fun getInputEvents(): Observable<Input.InputEvent> {
 //        // TODO:
 //        return mqttManager

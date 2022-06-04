@@ -22,10 +22,13 @@ val KProperty0<*>.isLazyInitialized: Boolean
         return isLazyInitialized
     }
 
-fun String.exec(baseDir: File = File(Path.of("").toAbsolutePath().toString())): String {
+fun String.exec(
+    baseDir: File = File(Path.of("").toAbsolutePath().toString()),
+    timeoutSeconds: Long = 20,
+): String {
     val process = ProcessBuilder().directory(baseDir).command(split(" ").filter { it != " " })
         .start()!!
-        .also { it.waitFor(20, TimeUnit.SECONDS) }
+        .also { it.waitFor(timeoutSeconds, TimeUnit.SECONDS) }
 
     try {
         process.exitValue()

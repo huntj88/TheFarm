@@ -8,13 +8,14 @@ import me.jameshunt.eventfarm.core.Configurable
 import me.jameshunt.eventfarm.core.Input
 import me.jameshunt.eventfarm.core.Logger
 import me.jameshunt.eventfarm.core.TypedValue
+import java.io.Closeable
 import java.io.InputStream
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
 @Deprecated("use mqtt version instead")
-class DepthSensorInput(override val config: Config, private val logger: Logger) : Input {
+class DepthSensorInput(override val config: Config, private val logger: Logger) : Input, Closeable {
     data class Config(
         override val id: UUID,
         override val className: String,
@@ -67,6 +68,12 @@ class DepthSensorInput(override val config: Config, private val logger: Logger) 
         }
 
         return Observable.merge(resultEvents, errorEvents)
+    }
+
+    override fun close() {
+        serialCommunicationExecutor.shutdownNow()
+        waterDistance.onComplete()
+        error.onComplete()
     }
 
     private fun listenRetryForever() {

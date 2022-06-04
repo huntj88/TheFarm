@@ -1,6 +1,24 @@
 #!/bin/bash
 # run with sudo
+echo "Installing java"
+apt install -y default-jdk
+
+echo "Installing adb"
+apt-get install -y android-tools-adb
+
+if [ -x "$(command -v docker)" ]; then
+  echo "Docker installed already"
+else
+  echo "Installing docker"
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sh get-docker.sh
+fi
+
+echo "configuring docker"
+source setupDockerPi.sh # seems to not work?
+
+echo "Creating System Service"
 source setupSystemd.sh
-source setupDockerPi.sh
+
 echo "install complete, rebooting"
 reboot

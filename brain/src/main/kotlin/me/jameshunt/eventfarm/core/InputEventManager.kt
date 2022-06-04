@@ -33,6 +33,7 @@ class InputEventManager(
 
     override fun close() {
         streamListeners.forEach { (_, disposable) -> disposable.dispose() }
+        eventStream.onComplete()
     }
 
     private fun Input.getInputEventsErrorResume(): Observable<Input.InputEvent> {
