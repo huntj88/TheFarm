@@ -29,13 +29,19 @@ class VPDFunction(override val config: Config, private val inputEventManager: II
             .filter { it.inputId == config.humidityId }
             .filter { it.value is TypedValue.Percent }
 
-        return Observable.combineLatest(tempStream, humidityStream) { t, h ->
-            // TODO: filter out old values? example: new temp, super old humidity value
-            val temperature = (t.value as TypedValue.Temperature).asCelsius()
-            val humidity = (h.value as TypedValue.Percent)
-
-            Input.InputEvent(config.id, null, Instant.now(), calcVPD(temperature, humidity))
-        }.throttleLast(100, TimeUnit.MILLISECONDS)
+        return Observable
+            .combineLatest(tempStream, humidityStream) { t, h -> t to h }
+            .filter { (t, h) ->
+                val maxAge = Instant.now().minusSeconds(90L)
+                t.time.isAfter(maxAge) && h.time.isAfter(maxAge)
+            }
+            .map { (t, h) ->
+                val temperature = (t.value as TypedValue.Temperature).asCelsius()
+                val humidity = (h.value as TypedValue.Percent)
+                val vpd = calcVPD(temperature, humidity)
+                Input.InputEvent(config.id, null, maxOf(t.time, h.time), vpd)
+            }
+            .throttleLast(100, TimeUnit.MILLISECONDS)
     }
 
     private fun calcVPD(temp: TypedValue.Temperature, humidity: TypedValue.Percent): TypedValue.Pressure {
