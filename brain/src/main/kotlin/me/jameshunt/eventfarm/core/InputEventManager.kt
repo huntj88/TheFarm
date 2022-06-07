@@ -47,7 +47,7 @@ class InputEventManager(
     override fun getEventStream(): Observable<Input.InputEvent> = eventStream
 
     init {
-        getEventStream().subscribe({ inputEvent ->
+        getEventStream().doOnNext { inputEvent ->
             val config = getConfigurable.invoke(inputEvent.inputId).config
             val logger = loggerFactory.create(config)
             if (inputEvent.value is TypedValue.Error) {
@@ -55,6 +55,6 @@ class InputEventManager(
             } else {
                 logger.trace(inputEvent.toString())
             }
-        }, { throw it })
+        }.subscribe()
     }
 }

@@ -10,6 +10,7 @@ import me.jameshunt.eventfarm.customcontroller.MyLightingController
 import me.jameshunt.eventfarm.customcontroller.PressurePumpController
 import me.jameshunt.eventfarm.customcontroller.WateringController
 import me.jameshunt.eventfarm.vpd.VPDController
+import java.io.Closeable
 import java.io.File
 import java.time.Instant
 import java.time.LocalTime
@@ -26,6 +27,7 @@ import java.util.*
 //  ensure camera reset on camera app
 // TODO: if esp8266's cannot connect to the wifi, esp8266 broadcast wifi with password, allow raspberry pi or dev computer to reach out to esp8266 and configure it
 //  (provide it wifi ssid, wifi password, and mqtt broker ip)
+// TODO: delete logs that are more than a month old (after influxdb is fully integrated)
 
 // TODO: can i re-instantiate an input when it errors due to subject already being disposed?
 
@@ -67,6 +69,7 @@ object DI {
 
     val loggerFactory = LoggerFactory()
     val inputEventManager: InputEventManager = InputEventManager(loggerFactory) { it.getConfigurable() }
+    val influxDBManager = InfluxDBService(inputEventManager) { it.getConfigurable() }
 
     val scheduler: Scheduler = Scheduler(DefaultLogger(Scheduler::class.java.name), loggerFactory) { findId ->
         val configurable = findId.getConfigurable()
@@ -162,6 +165,14 @@ object DI {
             index = null
         )
         scheduler.schedule(exhaustFanSchedule)
+
+        ShutdownHandler.setup(
+            scheduler,
+            inputEventManager,
+            mqttManager,
+            influxDBManager,
+            getCloseableConfigurables = { configurable.mapNotNull { it as? Closeable } }
+        )
     }
 
     private fun UUID.getConfigurable(): Configurable {

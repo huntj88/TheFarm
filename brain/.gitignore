@@ -3,3 +3,4 @@
 /.gradle
 /out/
 /libs/
+/src/main/kotlin/me/jameshunt/eventfarm/core/Secrets.kt
