@@ -21,31 +21,32 @@ class InfluxDBService(
     private val client = InfluxDBClientFactory.create(cloudUrl, token.toCharArray())
 
     init {
-        writeToInfluxDB().subscribe()
+        writeEventStreamToInfluxDB().subscribe()
     }
 
-    private fun writeToInfluxDB(): Completable {
+    private fun writeEventStreamToInfluxDB(): Completable {
         // TODO: local copy of data to sync up on reconnect? currently drops values when no internet
+        // TODO: batch send data
         return inputEventManager.getEventStream().flatMapCompletable { inputEvent ->
-            write(inputEvent).onErrorResumeNext {
+            inputEvent.writeToInfluxDB().onErrorResumeNext {
                 logger.error("Error writing $inputEvent to InfluxDB", it)
                 Completable.complete()
                     .delay(15, TimeUnit.SECONDS) // retry in 15 seconds
-                    .andThen { writeToInfluxDB() }
+                    .andThen { writeEventStreamToInfluxDB() }
             }
         }
     }
 
-    private fun write(inputEvent: Input.InputEvent): Completable {
-        val className = getConfigurable(inputEvent.inputId)::class.java.simpleName
+    private fun Input.InputEvent.writeToInfluxDB(): Completable {
+        val className = getConfigurable(inputId)::class.java.simpleName
 
         val point: Point = Point
             .measurement("input")
-            .addField(inputEvent)
-            .addTag("inputId", inputEvent.inputId.toString())
-            .addTag("inputIndex", inputEvent.index?.toString()) // could be null or could add cardinality
+            .addField(this)
+            .addTag("inputId", inputId.toString())
+            .addTag("inputIndex", index?.toString()) // could be null or could add cardinality
             .addTag("className", className) // will not add cardinality, dependent on inputId
-            .time(inputEvent.time, WritePrecision.NS)
+            .time(time, WritePrecision.NS)
 
         return Completable
             .fromAction { client.writeApiBlocking.writePoint(bucket, org, point) }
