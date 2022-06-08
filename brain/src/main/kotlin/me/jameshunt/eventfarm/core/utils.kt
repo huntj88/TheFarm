@@ -37,7 +37,9 @@ fun String.exec(
     }
 
     if (process.exitValue() != 0) {
-        throw Exception(process.errorStream.bufferedReader().readText())
+        // TODO: will exit with 143 (SIGTERM) if thefarm service stopped in middle of a command, should it wait for normal completion?
+        val errorMessage = process.errorStream.bufferedReader().readText()
+        throw Exception("errorCode: ${process.exitValue()}, $errorMessage")
     }
     return process.inputStream.bufferedReader().readText().trim()
 }

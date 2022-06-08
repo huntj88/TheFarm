@@ -8,7 +8,6 @@ import java.io.Closeable
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 // TODO: persist scheduled stuff to sqlite? resume a schedule when rebooted?
 //  like putting H2O2 in the water 3 days after the last time. controller scheduling the h2o2 could check the last time it was scheduled for after reboot?
@@ -57,8 +56,11 @@ class Scheduler(
     }
 
     fun schedule(item: ScheduleItem) {
-        val schedulable = getSchedulable(item.id)
+        if (!keepRunning) {
+            return
+        }
 
+        val schedulable = getSchedulable(item.id)
         synchronized(this) {
             val disposable = streamListeners[item.id]
             if (disposable == null || disposable.isDisposed) {
@@ -71,13 +73,19 @@ class Scheduler(
     override fun close() {
         logger.debug("shutting down scheduler")
         keepRunning = false
-        executor.awaitTermination(10, TimeUnit.SECONDS)
-        streamListeners.forEach { (_, disposable) -> disposable.dispose() }
-        scheduleStream.onComplete()
+        executor.execute {
+            // will run after the scheduler loop is finished
+            logger.debug("shutting down scheduler subscribers")
+            synchronized(this) {
+                streamListeners.forEach { (_, disposable) -> disposable.dispose() }
+            }
+            scheduleStream.onComplete()
+            logger.debug("scheduler shutdown complete")
+        }
     }
 
     private fun loop() = executor.execute {
-        while (true) {
+        while (keepRunning) {
             synchronized(this) {
                 val now = Instant.now()
                 waiting.sortBy { it.scheduleItem.startTime }
