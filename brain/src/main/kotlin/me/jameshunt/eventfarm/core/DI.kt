@@ -68,15 +68,22 @@ object DI {
         .add(KotlinJsonAdapterFactory()).build()
 
     val loggerFactory = LoggerFactory()
-    val inputEventManager: InputEventManager = InputEventManager(loggerFactory) { it.getConfigurable() }
-    val influxDBManager = InfluxDBService(inputEventManager) { it.getConfigurable() }
+    val inputEventManager: InputEventManager = InputEventManager(
+        loggerFactory = loggerFactory,
+        getConfigurable = { it.getConfigurable() }
+    )
+    val influxDBManager = InfluxDBService(
+        logger = DefaultLogger(InputEventManager::class.java.simpleName),
+        inputEventManager = inputEventManager,
+        getConfigurable = { it.getConfigurable() }
+    )
 
-    val scheduler: Scheduler = Scheduler(DefaultLogger(Scheduler::class.java.name), loggerFactory) { findId ->
+    val scheduler: Scheduler = Scheduler(DefaultLogger(Scheduler::class.java.simpleName), loggerFactory) { findId ->
         val configurable = findId.getConfigurable()
         configurable as? Schedulable ?: throw IllegalArgumentException("configurable is not schedulable: $configurable")
     }
 
-    val mqttManager = MQTTManager(DefaultLogger(MQTTManager::class.java.name))
+    val mqttManager = MQTTManager(DefaultLogger(MQTTManager::class.java.simpleName))
 
     private val configurableFactory =
         ConfigurableFactory(loggerFactory, moshi, libDirectory, inputEventManager, scheduler, mqttManager)

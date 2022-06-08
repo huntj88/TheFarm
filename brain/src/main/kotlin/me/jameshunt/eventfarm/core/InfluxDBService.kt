@@ -7,9 +7,11 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.io.Closeable
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class InfluxDBService(
-    inputEventManager: IInputEventManager,
+    private val logger: Logger,
+    private val inputEventManager: IInputEventManager,
     private val getConfigurable: (UUID) -> Configurable
 ) : Closeable {
     private val token = Secrets.influxDBApiKey
@@ -19,12 +21,21 @@ class InfluxDBService(
     private val client = InfluxDBClientFactory.create(cloudUrl, token.toCharArray())
 
     init {
-        inputEventManager.getEventStream()
-            .flatMapCompletable { write(it) }
-            .subscribe()
+        writeToInfluxDB().subscribe()
     }
 
-    // TODO: local copy of data to sync up on reconnect? just parse old logs?
+    private fun writeToInfluxDB(): Completable {
+        // TODO: local copy of data to sync up on reconnect? currently drops values when no internet
+        return inputEventManager.getEventStream().flatMapCompletable { inputEvent ->
+            write(inputEvent).onErrorResumeNext {
+                logger.error("Error writing $inputEvent to InfluxDB", it)
+                Completable.complete()
+                    .delay(15, TimeUnit.SECONDS) // retry in 15 seconds
+                    .andThen { writeToInfluxDB() }
+            }
+        }
+    }
+
     private fun write(inputEvent: Input.InputEvent): Completable {
         val className = getConfigurable(inputEvent.inputId)::class.java.simpleName
 
