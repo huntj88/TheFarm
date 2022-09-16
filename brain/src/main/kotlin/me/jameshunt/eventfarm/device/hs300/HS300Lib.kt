@@ -27,10 +27,10 @@ class HS300Lib(
         val err_code: Int
     )
 
-    private val idPrefix = "8006D4C79A1D2CE0935A5A79B28D00291F06E0D10" // TODO parametrize?
-    fun setState(ip: String, index: Int, on: Boolean) {
+    fun setState(ip: String, deviceIdPrefix: String, index: Int, on: Boolean) {
         val state = if (on) 1 else 0
-        val setState = """{"context":{"child_ids":["$idPrefix$index"]},"system":{"set_relay_state":{"state":$state}}}"""
+        val setState =
+            """{"context":{"child_ids":["$deviceIdPrefix$index"]},"system":{"set_relay_state":{"state":$state}}}"""
         setState.executeJsonCommand(ip)
     }
 
@@ -44,8 +44,8 @@ class HS300Lib(
         return parsedData.system.get_sysinfo
     }
 
-    fun getCurrentEnergyMeter(ip: String, index: Int): PlugEnergyMeter {
-        val getEnergyCommand = """{"emeter":{"get_realtime":{}},"context":{"child_ids":["$idPrefix$index"]}}"""
+    fun getCurrentEnergyMeter(ip: String, deviceIdPrefix: String, index: Int): PlugEnergyMeter {
+        val getEnergyCommand = """{"emeter":{"get_realtime":{}},"context":{"child_ids":["$deviceIdPrefix$index"]}}"""
 
         val parsedData = getEnergyCommand
             .executeJsonCommand(ip)

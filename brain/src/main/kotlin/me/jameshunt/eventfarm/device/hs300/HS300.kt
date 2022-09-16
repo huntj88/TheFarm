@@ -23,6 +23,7 @@ class HS300(
         override val className: String = Config::class.java.name,
         val name: String,
         val ip: String,
+        val deviceIdPrefix: String,
         val numPlugs: Int = 6,
         val stateUpdateIntervalSeconds: Int = 20, // TODO: move to json
         val eMeterUpdateIntervalSeconds: Int = 120,
@@ -55,12 +56,19 @@ class HS300(
         config.shutdownState
             .split(",")
             .map { it == "1" }
-            .forEachIndexed { i, on -> hS300Lib.setState(config.ip, index = i, on) }
+            .forEachIndexed { i, on ->
+                hS300Lib.setState(
+                    config.ip,
+                    deviceIdPrefix = config.deviceIdPrefix,
+                    index = i,
+                    on
+                )
+            }
     }
 
     private fun setState(on: Boolean, index: Int) {
         logger.debug("Set state: $on, plugIndex: $index")
-        hS300Lib.setState(config.ip, index, on)
+        hS300Lib.setState(config.ip, config.deviceIdPrefix, index, on)
     }
 
     private fun getStateEvents(): Observable<Input.InputEvent> {
@@ -84,7 +92,7 @@ class HS300(
             .interval(10, config.eMeterUpdateIntervalSeconds.toLong(), TimeUnit.SECONDS)
             .flatMap {
                 (0 until config.numPlugs)
-                    .map { plugIndex -> hS300Lib.getCurrentEnergyMeter(config.ip, plugIndex) }
+                    .map { plugIndex -> hS300Lib.getCurrentEnergyMeter(config.ip, config.deviceIdPrefix, plugIndex) }
                     .toObservable()
             }
             .flatMap {

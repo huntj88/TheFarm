@@ -1,5 +1,9 @@
 #!/bin/bash
 # run with sudo
+
+echo "installing git"
+apt install -y git
+
 echo "Installing java"
 apt install -y default-jdk
 

@@ -16,6 +16,7 @@ import java.time.Instant
 import java.time.LocalTime
 import java.util.*
 
+// TODO: pull config down from cloud
 // TODO: controller for alerts when tank is getting empty
 // TODO: controller for dispensing H2O2 automatically proportional to the amount of water left in the tank
 //  (and later use dissolved oxygen sensor, which i think might be proportional to h2o2 concentration)
@@ -40,7 +41,7 @@ object DI {
     }
 
     init {
-        // TODO: install adb automatically
+        // TODO: install stuff here instead of install.sh? (conditional installation?)
         // TODO: better place for this?
         val cliDirectory: File = File(libDirectory, "tplink-smartplug")
         if (!cliDirectory.exists()) {
@@ -163,15 +164,15 @@ object DI {
             index = null
         )
         scheduler.schedule(drainPumpSchedule)
-
-        val exhaustFanSchedule = ScheduleItem(
-            id = UUID.fromString("00000000-0000-0000-0004-500000000000"),
-            data = TypedValue.Bool(true),
-            startTime = Instant.now(),
-            endTime = null,
-            index = null
-        )
-        scheduler.schedule(exhaustFanSchedule)
+//
+//        val exhaustFanSchedule = ScheduleItem(
+//            id = UUID.fromString("00000000-0000-0000-0004-500000000000"),
+//            data = TypedValue.Bool(true),
+//            startTime = Instant.now(),
+//            endTime = null,
+//            index = null
+//        )
+//        scheduler.schedule(exhaustFanSchedule)
 
         ShutdownHandler.setup(
             scheduler,
