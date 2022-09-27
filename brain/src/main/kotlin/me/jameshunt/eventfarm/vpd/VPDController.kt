@@ -8,6 +8,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 // super basic vpd controller
+// todo: alert if vpd is off baseline by x pascals for longer than y minutes?
 class VPDController(
     override val config: Config,
     private val scheduler: Scheduler,
@@ -37,13 +38,13 @@ class VPDController(
         return inputEventManager
             .getEventStream()
             .filter { it.inputId == config.vpdInputId && it.value is TypedValue.Pressure }
-            .throttleLatest(10, TimeUnit.SECONDS)
+            .throttleLatest(15, TimeUnit.SECONDS)
             .doOnNext {
                 val vpdPascal = (it.value as TypedValue.Pressure).asPascal()
-                val shouldBeOn = vpdPascal.value > 925
+                val shouldBeOn = vpdPascal.value > 1000
 
                 val startTime = Instant.now()
-                val endTime = if (shouldBeOn) startTime.plusSeconds(7) else null
+                val endTime = if (shouldBeOn) startTime.plusSeconds(14) else null
 
                 if (shouldBeOn) {
                     logger.debug("VPD too high, raising humidity")

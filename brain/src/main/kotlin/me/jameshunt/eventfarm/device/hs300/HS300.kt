@@ -24,10 +24,10 @@ class HS300(
         val name: String,
         val ip: String,
         val deviceIdPrefix: String,
+        val shutdownState: String, // 0 for off, 1 for on // TODO: does json override this? turning off sensor and fan on plug index 4, secondary power strip
         val numPlugs: Int = 6,
         val stateUpdateIntervalSeconds: Int = 20, // TODO: move to json
-        val eMeterUpdateIntervalSeconds: Int = 120,
-        val shutdownState: String = "0,0,0,0,0,0" // 0 for off, 1 for on
+        val eMeterUpdateIntervalSeconds: Int = 120
 //        val idPrefix: String // TODO?
     ) : Configurable.Config
 

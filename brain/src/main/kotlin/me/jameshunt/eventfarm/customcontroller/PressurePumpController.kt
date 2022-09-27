@@ -61,6 +61,17 @@ class PressurePumpController(
                         end
                     )
                 )
+
+                // TODO: get splitter and use same outlet for both pressure pumps?
+                scheduler.schedule(
+                    Scheduler.ScheduleItem(
+                        "00000000-0000-0000-0000-000000000004".let(UUID::fromString),
+                        1,
+                        TypedValue.Bool(true),
+                        now,
+                        end
+                    )
+                )
             }
     }
 

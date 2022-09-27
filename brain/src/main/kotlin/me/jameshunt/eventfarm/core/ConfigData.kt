@@ -1,8 +1,8 @@
 package me.jameshunt.eventfarm.core
 
 val configJson = listOf(
-    """{"id":"00000000-0000-0000-0000-000000000003","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}Config","name":"On/Off Status/set state, and power usage metrics","ip":"192.168.1.82","deviceIdPrefix": "8006D4C79A1D2CE0935A5A79B28D00291F06E0D10"}""",
-    """{"id":"00000000-0000-0000-0000-000000000004","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}Config","name":"On/Off Status/set state, and power usage metrics","ip":"192.168.1.84","deviceIdPrefix": "8006883275B48035D844595BF48CAA541F412BBC0"}""",
+    """{"id":"00000000-0000-0000-0000-000000000003","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}Config","name":"On/Off Status/set state, and power usage metrics","ip":"192.168.1.82","deviceIdPrefix": "8006D4C79A1D2CE0935A5A79B28D00291F06E0D10", "shutdownState": "0,0,0,0,0,0"}""",
+    """{"id":"00000000-0000-0000-0000-000000000004","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}Config","name":"On/Off Status/set state, and power usage metrics","ip":"192.168.1.84","deviceIdPrefix": "8006883275B48035D844595BF48CAA541F412BBC0", "shutdownState": "0,0,0,0,1,0"}""", // index 4 keep fan and sensor powered
 //    """{"id":"00000000-0000-0000-0000-000000000102","className":"me.jameshunt.eventfarm.device.hs300.HS300${'$'}OnOffOutput${'$'}Config","name":"turn plug on or off at a position","ip":"192.168.1.82"}""",
     """{"id":"00000000-0000-0000-0000-000000000103","className":"me.jameshunt.eventfarm.device.AndroidCamera${'$'}Config","name":"Android Camera"}""",
     """{"id":"00000000-0000-0000-0000-000000000005","className":"me.jameshunt.eventfarm.device.ezohum.AtlasScientificEzoHum${'$'}Config","name":"temp and humidity sensor","mqttTopic":"ezoHum"}""",
