@@ -38,17 +38,30 @@ class ConfigurableFactory(
 
     fun configurableFromJson(json: String): Configurable {
         // get information the interface gives us
-        val data = moshi.adapter(Hack::class.java).fromJson(json)
-        val className = data?.className ?: throw IllegalArgumentException()
 
-        // reparse the json with the real adapter
-        val typedAdapter = moshi.adapter<Configurable.Config>(Class.forName(className))
-        val config = typedAdapter.fromJson(json) ?: throw IllegalStateException()
+        try {
+            val data = moshi.adapter(Hack::class.java).fromJson(json)
+            val className = data?.className ?: throw IllegalArgumentException()
 
-        val configurable = config::class.java.enclosingClass
-        check(Configurable::class.java.isAssignableFrom(configurable))
+            // reparse the json with the real adapter
+            val typedAdapter = moshi.adapter<Configurable.Config>(Class.forName(className))
+            val config = typedAdapter.fromJson(json) ?: throw IllegalStateException()
 
-        return createInjected(configurable, config)
+            val configurable = config::class.java.enclosingClass
+            check(Configurable::class.java.isAssignableFrom(configurable))
+
+            loggerFactory.create(config).debug(
+                message = "injecting configurable with json: $json",
+            )
+
+            return createInjected(configurable, config)
+        } catch (e: Throwable) {
+            DefaultLogger(ConfigurableFactory::class.java.simpleName).error(
+                message = "error injecting configurable with json: $json",
+                throwable = e
+            )
+            throw e
+        }
     }
 
     private fun <T> createInjected(classToInject: Class<T>, config: Configurable.Config): Configurable {

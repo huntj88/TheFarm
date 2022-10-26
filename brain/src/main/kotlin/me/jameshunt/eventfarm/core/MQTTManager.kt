@@ -32,8 +32,12 @@ class MQTTManager(private val logger: Logger) : Closeable {
         .map { client.isConnected }
         .doOnNext { isConnected ->
             if (!isConnected) {
-                logger.debug("mqtt client reconnecting to broker")
-                client.reconnect()
+                try {
+                    logger.debug("mqtt client reconnecting to broker")
+                    client.reconnect()
+                } catch (e: Exception) {
+                    logger.error("could not reconnect to mqtt broker", e)
+                }
             }
         }
         .delay(5, TimeUnit.SECONDS)
@@ -92,9 +96,13 @@ class MQTTManager(private val logger: Logger) : Closeable {
             })
             val connOpts = MqttConnectOptions()
             connOpts.isCleanSession = true
-            logger.debug("mqtt client connecting to broker")
-            connect(connOpts)
-            logger.debug("mqtt client connected to broker")
+
+            try {
+                logger.debug("mqtt client connecting to broker")
+                connect(connOpts)
+            } catch (e: Exception) {
+                logger.error("could not connect to mqtt broker", e)
+            }
         }
     }
 
