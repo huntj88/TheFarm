@@ -7,6 +7,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.io.Closeable
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 // TODO: security for mqtt, but starting with plaintext
@@ -17,7 +18,8 @@ class MQTTManager(private val logger: Logger) : Closeable {
 
     // mqtt broker and brain client use in memory persistence, so have to track subscribed topics here manually
     // in case of a disconnect
-    private val subscribedTopics = mutableSetOf<String>()
+    private val subscribedTopics = Collections.synchronizedSet(mutableSetOf<String>())
+    private val retrySubscribe = Collections.synchronizedSet(mutableSetOf<String>())
 
     private val client by lazy {
         // will not be initialized unless there are mqtt inputs
@@ -45,11 +47,27 @@ class MQTTManager(private val logger: Logger) : Closeable {
         .doOnNext { (wasConnected, isConnected) ->
             if (!wasConnected && isConnected) {
                 logger.debug("mqtt client reconnected to broker")
-                subscribedTopics.forEach { client.subscribe(it) }
+                try {
+                    subscribedTopics.forEach { client.subscribe(it) }
+                } catch (e: MqttException) {
+                    logger.debug("mqtt client reconnected to broker, but could not subscribe")
+                    subscribedTopics.forEach { retrySubscribe.add(it) }
+                }
             }
 
             if (!wasConnected && !isConnected) {
                 startMQTTBroker()
+            }
+
+            if (wasConnected && isConnected) {
+                retrySubscribe.forEach {
+                    try {
+                        client.subscribe(it)
+                        retrySubscribe.remove(it)
+                    } catch (e: MqttException) {
+                        logger.warn("mqtt subscription failed", e)
+                    }
+                }
             }
         }
         .subscribe()
@@ -59,7 +77,8 @@ class MQTTManager(private val logger: Logger) : Closeable {
         try {
             client.subscribe(topic)
         } catch (e: MqttException) {
-            logger.error("mqtt subscription failed", e);
+            logger.warn("mqtt subscription failed", e)
+            retrySubscribe.add(topic)
         }
         return incomingMessages
             .filter { it.topic == topic }
