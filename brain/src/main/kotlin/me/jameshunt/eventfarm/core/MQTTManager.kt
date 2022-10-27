@@ -56,7 +56,11 @@ class MQTTManager(private val logger: Logger) : Closeable {
 
     fun listen(topic: String): Observable<MqttMessage> {
         subscribedTopics.add(topic)
-        client.subscribe(topic)
+        try {
+            client.subscribe(topic)
+        } catch (e: MqttException) {
+            logger.error("mqtt subscription failed", e);
+        }
         return incomingMessages
             .filter { it.topic == topic }
             .map { it.payload }
