@@ -16,7 +16,24 @@ void loop() {
   int degreeToIncrement = 2;
   int delayMilliPerDegreeWater = numSecondsToWater * 1000 / 360.0 / degreeToIncrement;
 
-  for (float angle = 0; angle < 360; angle += degreeToIncrement) {
+  
+  for (float angle = 0; angle < 16; angle += degreeToIncrement) {
+    servo.writeMicroseconds((angle / 360.0 * pulseWidthDiff) + minPulseWidth);
+    delay(delayMilliPerDegreeWater * 6);
+  }
+
+
+  for (float angle = 16; angle < 32; angle += degreeToIncrement) {
+    servo.writeMicroseconds((angle / 360.0 * pulseWidthDiff) + minPulseWidth);
+    delay(delayMilliPerDegreeWater * 4);
+  }
+
+    for (float angle = 32; angle < 64; angle += degreeToIncrement) {
+    servo.writeMicroseconds((angle / 360.0 * pulseWidthDiff) + minPulseWidth);
+    delay(delayMilliPerDegreeWater * 2);
+  }
+
+  for (float angle = 64; angle < 360; angle += degreeToIncrement) {
     servo.writeMicroseconds((angle / 360.0 * pulseWidthDiff) + minPulseWidth);
     delay(delayMilliPerDegreeWater);
   }
