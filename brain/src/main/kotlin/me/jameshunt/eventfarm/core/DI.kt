@@ -149,14 +149,14 @@ object DI {
         )
         scheduler.schedule(pressurePumpControllerSchedule)
 
-//        val cameraSchedule = ScheduleItem(
-//            id = UUID.fromString("00000000-0000-0000-0004-300000000000"),
-//            data = TypedValue.None,
-//            startTime = Instant.now(),
-//            endTime = null,
-//            index = null
-//        )
-//        scheduler.schedule(cameraSchedule)
+        val cameraSchedule = ScheduleItem(
+            id = UUID.fromString("00000000-0000-0000-0004-300000000000"),
+            data = TypedValue.None,
+            startTime = Instant.now(),
+            endTime = null,
+            index = null
+        )
+        scheduler.schedule(cameraSchedule)
 
         val drainPumpSchedule = ScheduleItem(
             id = UUID.fromString("00000000-0000-0000-0004-400000000000"),
