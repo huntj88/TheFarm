@@ -43,8 +43,7 @@ class MyLightingController(
             .map { (it.value as TypedValue.Bool).value }
             .doOnNext { isOn ->
                 // TODO: support off in middle of day? on in morning and night?
-//                val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
-                val shouldBeOn = true // lettuce
+                val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
                 if (isOn != shouldBeOn) {
                     logger.warn("Lights on is: $isOn, when lights on should be: $shouldBeOn, correcting state", null)
                     scheduler.schedule(
@@ -56,6 +55,8 @@ class MyLightingController(
                             null
                         )
                     )
+                } else if (isOn) {
+                    logger.debug("Time is ${LocalTime.now()}, Lights on until: ${config.turnOnTime}, remaining ")
                 }
             }
     }
