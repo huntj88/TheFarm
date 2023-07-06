@@ -5,6 +5,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import me.jameshunt.eventfarm.core.*
 import java.time.Instant
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 class MyLightingController(
@@ -43,7 +44,8 @@ class MyLightingController(
             .map { (it.value as TypedValue.Bool).value }
             .doOnNext { isOn ->
                 // TODO: support off in middle of day? on in morning and night?
-                val shouldBeOn = LocalTime.now() >= config.turnOnTime && LocalTime.now() < config.turnOffTime
+                val now = LocalTime.now()
+                val shouldBeOn = now >= config.turnOnTime && now < config.turnOffTime
                 if (isOn != shouldBeOn) {
                     logger.warn("Lights on is: $isOn, when lights on should be: $shouldBeOn, correcting state", null)
                     scheduler.schedule(
@@ -56,7 +58,9 @@ class MyLightingController(
                         )
                     )
                 } else if (isOn) {
-                    logger.debug("Time is ${LocalTime.now()}, Lights on until: ${config.turnOnTime}, remaining ")
+                    logger.debug("Time is: $now, Lights on until: ${config.turnOffTime}, remaining minutes: ${now.until(config.turnOffTime, ChronoUnit.MINUTES)}")
+                } else {
+                    logger.debug("Time is: $now, Lights off until: ${config.turnOnTime}, remaining minutes: ${now.until(config.turnOnTime, ChronoUnit.MINUTES)}")
                 }
             }
     }

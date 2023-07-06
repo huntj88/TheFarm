@@ -4,7 +4,7 @@ Servo servo;
 int minPulseWidth = 500;
 int maxPulseWidth = 2500;
 int pulseWidthDiff = maxPulseWidth - minPulseWidth;
-int numSecondsToWater = 3;
+int numSecondsToWater = 6;
 int delayMilliPerDegreeWater = numSecondsToWater * 1000 / 360.0;
 
 int numSecondsToReturn = 6;

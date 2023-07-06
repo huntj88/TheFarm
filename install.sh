@@ -1,6 +1,8 @@
 #!/bin/bash
 # run with sudo
 
+# TODO: set raspberry time to local time?
+
 echo "installing git"
 apt install -y git
 
